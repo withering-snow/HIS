@@ -1,0 +1,4 @@
+#ifndef HIS_FILE_MANAGER_H
+#define HIS_FILE_MANAGER_H
+
+#endif// HIS_FILE_MANAGER_H

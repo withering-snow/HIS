@@ -1,0 +1,4 @@
+#ifndef HIS_UI_MANAGER_H
+#define HIS_UI_MANAGER_H
+
+#endif// HIS_UI_MANAGER_H
