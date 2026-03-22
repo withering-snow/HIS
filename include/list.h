@@ -3,7 +3,8 @@
 
 #include <base.h>
 
-typedef struct List_T *T;
+#define T List_T
+typedef struct T *T;
 
 // 生命周期
 /**
@@ -73,4 +74,7 @@ void *List_next(T l);
  * @param cmp 比较器
  */
 void List_sort(T l, compare cmp);
+
+#undef T
+
 #endif

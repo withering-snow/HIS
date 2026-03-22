@@ -28,8 +28,8 @@ static PNode __create_node(size_t element_size, const void *data, PNode prev, PN
 }
 
 
-T List_new(size_t element_size) {
-    T l = safe_malloc(sizeof(struct List_T));
+List_T List_new(size_t element_size) {
+    List_T l = safe_malloc(sizeof(struct List_T));
     l->element_size = element_size;
     l->size = 0;
     l->dummy = safe_malloc(sizeof(struct Node));
@@ -37,9 +37,9 @@ T List_new(size_t element_size) {
     return l;
 }
 
-void List_free(T *l) {
+void List_free(List_T *l) {
     ASSERT(l && *l, "不能释放空链表");
-    T self = *l;
+    List_T self = *l;
     PNode curr = self->dummy->next;
     while(curr != self->dummy) {
         PNode next = curr->next;
@@ -51,15 +51,15 @@ void List_free(T *l) {
     *l = NULL;
 }
 
-size_t List_size(T l) { return l ? l->size : 0; }
+size_t List_size(List_T l) { return l ? l->size : 0; }
 
-void List_push_back(T l, const void *data) {
+void List_push_back(List_T l, const void *data) {
     ASSERT(l, "链表不能为空");
     __create_node(l->element_size, data, l->dummy->prev, l->dummy);
     l->size++;
 }
 
-void *List_find(T l, const void *data_ptr, compare cmp) {
+void *List_find(List_T l, const void *data_ptr, compare cmp) {
     ASSERT(l && cmp, "参数不能为空");
     for(PNode it = l->dummy->next; it != l->dummy; it = it->next) {
         if(cmp(it->data, data_ptr) == 0)
@@ -68,7 +68,7 @@ void *List_find(T l, const void *data_ptr, compare cmp) {
     return NULL;
 }
 
-void List_remove(T l, void *data_ptr) {
+void List_remove(List_T l, void *data_ptr) {
     ASSERT(l && data_ptr, "参数不能为空");
     PNode target = GET_NODE(data_ptr);
     ASSERT(target != l->dummy, "不能删除 dummy 节点");
@@ -79,7 +79,7 @@ void List_remove(T l, void *data_ptr) {
     l->size--;
 }
 
-void *List_first(T l) {
+void *List_first(List_T l) {
     ASSERT(l, "链表不能为空");
     l->cursor = l->dummy->next;
     if(l->cursor == l->dummy)
@@ -87,7 +87,7 @@ void *List_first(T l) {
     return l->cursor->data;
 }
 
-void *List_next(T l) {
+void *List_next(List_T l) {
     ASSERT(l, "链表不能为空");
     if(l->cursor == l->dummy)
         return NULL;
@@ -130,7 +130,7 @@ static PNode __merge_sort(PNode head, compare cmp) {
     return __merge(__merge_sort(head, cmp), __merge_sort(mid, cmp), cmp);
 }
 
-void List_sort(T l, compare cmp) {
+void List_sort(List_T l, compare cmp) {
     ASSERT(l, "链表不能为空");
     ASSERT(cmp, "比较器不能为空");
     if(l->size < 2)
