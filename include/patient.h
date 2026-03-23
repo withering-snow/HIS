@@ -48,6 +48,15 @@ const struct MedicalRecord *Patient_get_record(T p, int index);
 Status Patient_add_record(T p, const struct MedicalRecord *new_record);
 Status Patient_set_record(T p, const struct MedicalRecord *new_record);
 
+// 比较器
+int Patient_cmp_id(const void *a, const void *b);
+int Patient_cmp_age(const void *a, const void *b);
+int Patient_cmp_name(const void *a, const void *b);
+int Patient_cmp_record(const void *a, const void *b);
+
+// 模糊姓名搜索器
+int Patient_cmp_fuzzy(const void *a, const void *b);
+
 #undef T
 
 #endif// HIS_PATIENT_H
