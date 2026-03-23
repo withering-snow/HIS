@@ -1,7 +1,7 @@
 #ifndef HIS_DOCTOR_H
 #define HIS_DOCTOR_H
 
-#include <../core/base.h>
+#include <base.h>
 
 #define T Doctor_T
 typedef struct Doctor_T *T;

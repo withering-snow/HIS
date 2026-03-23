@@ -1,4 +1,4 @@
-#include <../include/entity/patient.h>
+#include <patient.h>
 
 struct Patient_T {
     int id;
