@@ -1,11 +1,22 @@
 cmake_minimum_required(VERSION 4.0)
+
 project(HIS
         LANGUAGES C
-        VERSION 0.0.1)
+        VERSION 1.0.0)
 
 set(CMAKE_C_STANDARD 11)
 
-file(GLOB SOURCES "src/*.c")
-add_executable(HIS ${SOURCES})
+include_directories(
+    include
+    include/core
+    include/entity
+    include/repository
+    include/service
+    include/io
+    include/ui
+)
 
-target_include_directories(HIS PRIVATE "include")
+file(GLOB_RECURSE SOURCES "src/*.c")
+
+# 3. 生成可执行文件
+add_executable(HIS ${SOURCES})

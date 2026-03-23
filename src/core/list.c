@@ -1,4 +1,4 @@
-#include <list.h>
+#include <../include/core/list.h>
 #include <string.h>
 
 typedef struct Node {
