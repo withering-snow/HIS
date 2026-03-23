@@ -42,7 +42,7 @@ Status Patient_set_age(T p, int new_age);
 Status Patient_set_sex(T p, int new_sex);
 Status Patient_set_name(T p, const char *new_name);
 
-// 对医疗记录的访问器与修改器
+// 医疗记录管理
 int Patient_get_record_count(T p);
 const struct MedicalRecord *Patient_get_record(T p, int index);
 Status Patient_add_record(T p, const struct MedicalRecord *new_record);
