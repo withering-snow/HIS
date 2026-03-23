@@ -12,19 +12,19 @@ struct Patient_T {
 Patient_T Patient_new(int id, int age, int sex, const char *name) {}
 void Patient_free(Patient_T *p) {}
 
-// 访问成员
+// 访问器
 int Patient_get_id(Patient_T p) {}
 int Patient_get_age(Patient_T p) {}
 int Patient_get_sex(Patient_T p) {}
 char *Patient_get_name(Patient_T p) {}
 
-// 修改成员
+// 修改器
 Status Patient_set_id(Patient_T p, int new_id) {}
 Status Patient_set_age(Patient_T p, int new_age) {}
 Status Patient_set_sex(Patient_T p, int new_sex) {}
 Status Patient_set_name(Patient_T p, const char *new_name) {}
 
-// 对医疗记录的操作
+// 对医疗记录的访问器与修改器
 int Patient_get_record_count(Patient_T p) {}
 const struct MedicalRecord *Patient_get_record(Patient_T p, int index) {}
 Status Patient_add_record(Patient_T p, const struct MedicalRecord *new_record) {}
@@ -36,5 +36,5 @@ int Patient_cmp_age(const void *a, const void *b){}
 int Patient_cmp_name(const void *a, const void *b){}
 int Patient_cmp_record(const void *a, const void *b){}
 
-// 模糊姓名搜索器
+// 模糊姓名搜索比较器
 int Patient_cmp_fuzzy(const void *a, const void *b){}

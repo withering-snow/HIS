@@ -30,19 +30,19 @@ typedef struct MedicalRecord {
 T Patient_new(int id, int age, int sex, const char *name);
 void Patient_free(T *p);
 
-// 访问成员
+// 访问器
 int Patient_get_id(T p);
 int Patient_get_age(T p);
 int Patient_get_sex(T p);
 char *Patient_get_name(T p);
 
-// 修改成员
+// 修改器
 Status Patient_set_id(T p, int new_id);
 Status Patient_set_age(T p, int new_age);
 Status Patient_set_sex(T p, int new_sex);
 Status Patient_set_name(T p, const char *new_name);
 
-// 对医疗记录的操作
+// 对医疗记录的访问器与修改器
 int Patient_get_record_count(T p);
 const struct MedicalRecord *Patient_get_record(T p, int index);
 Status Patient_add_record(T p, const struct MedicalRecord *new_record);
@@ -54,7 +54,7 @@ int Patient_cmp_age(const void *a, const void *b);
 int Patient_cmp_name(const void *a, const void *b);
 int Patient_cmp_record(const void *a, const void *b);
 
-// 模糊姓名搜索器
+// 模糊姓名搜索比较器
 int Patient_cmp_fuzzy(const void *a, const void *b);
 
 #undef T
