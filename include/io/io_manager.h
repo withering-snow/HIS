@@ -1,0 +1,4 @@
+#ifndef HIS_IO_MANAGER_H
+#define HIS_IO_MANAGER_H
+
+#endif// HIS_IO_MANAGER_H

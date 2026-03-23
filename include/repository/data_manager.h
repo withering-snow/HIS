@@ -1,0 +1,4 @@
+#ifndef HIS_DATA_MANAGER_H
+#define HIS_DATA_MANAGER_H
+
+#endif// HIS_DATA_MANAGER_H
