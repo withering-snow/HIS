@@ -7,9 +7,34 @@
 
 // 状态码定义
 typedef enum {
+    // 基础状态
     HIS_OK = 0,
     HIS_ERR_NO_MEM = -1,
-    HIS_ERR_INVALID_ARG = -2
+    HIS_ERR_INVALID_ARG = -2,
+
+    // 通用搜索错误
+    HIS_ERR_NOT_FOUND = -10,
+    HIS_ERR_ALREADY_EXISTS = -11,
+
+    // Patient/Doctor 业务相关
+    HIS_ERR_INVALID_ID = -20,
+
+    // Ward (病房) 业务相关
+    HIS_ERR_WARD_FULL = -30,
+    HIS_ERR_BED_OCCUPIED = -31,
+    HIS_ERR_PATIENT_NOT_IN_WARD = -32,
+
+    // Medicine (药品) 业务相关
+    HIS_ERR_OUT_OF_STOCK = -40,
+    HIS_ERR_INVALID_DOSAGE = -41,
+
+    // Fund (财务) 业务相关
+    HIS_ERR_INSUFFICIENT_FUNDS = -50,
+    HIS_ERR_PAYMENT_REQUIRED = -51,
+
+    // 系统级/IO 错误
+    HIS_ERR_IO_FAILURE = -60,
+    HIS_ERR_FILE_CORRUPT = -61
 } Status;
 
 // 科室分类

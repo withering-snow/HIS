@@ -3,7 +3,6 @@
 
 #include <base.h>
 #include <list.h>
-#include <stdint.h>
 
 // 匿名的主要实体
 #define T Patient_T
