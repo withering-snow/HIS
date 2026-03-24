@@ -1,8 +1,7 @@
 #ifndef HIS_PATIENT_H
 #define HIS_PATIENT_H
 
-#include <base.h>
-#include <list.h>
+#include <HIS_core.h>
 
 // 匿名的主要实体
 #define T Patient_T

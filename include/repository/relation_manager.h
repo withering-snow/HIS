@@ -1,8 +1,8 @@
 #ifndef HIS_RELATION_MANAGER_H
 #define HIS_RELATION_MANAGER_H
 
-#include <base.h>
-#include <list.h>
+#include <HIS_core.h>
+#include <HIS_entity.h>
 
 typedef struct Rel_doc Rel_doc;
 typedef struct Rel_ward Rel_ward;

@@ -1,14 +1,8 @@
 #ifndef HIS_DATA_MANAGER_H
 #define HIS_DATA_MANAGER_H
 
-#include <base.h>
-#include <list.h>
-
-#include <doctor.h>
-#include <fund.h>
-#include <medicine.h>
-#include <patient.h>
-#include <ward.h>
+#include <HIS_core.h>
+#include <HIS_entity.h>
 
 // 生命周期：全部实体链表构建与释放
 void Data_init();

@@ -1,7 +1,7 @@
 #ifndef HIS_FUND_H
 #define HIS_FUND_H
 
-#include <base.h>
+#include <HIS_core.h>
 
 #define T Fund_T
 typedef struct Fund_T *T;

@@ -1,7 +1,7 @@
 #ifndef HIS_MEDICINE_H
 #define HIS_MEDICINE_H
 
-#include <base.h>
+#include <HIS_core.h>
 
 #define T Medicine_T
 typedef struct Medicine_T *T;

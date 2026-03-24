@@ -1,8 +1,7 @@
 #ifndef HIS_WARD_H
 #define HIS_WARD_H
 
-#include <base.h>
-#include <list.h>
+#include <HIS_core.h>
 
 #define T Ward_T
 typedef struct Ward_T *T;
