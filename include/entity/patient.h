@@ -1,8 +1,7 @@
 #ifndef HIS_PATIENT_H
 #define HIS_PATIENT_H
 
-#include <base.h>
-#include <list.h>
+#include <HIS_core.h>
 
 // 匿名的主要实体
 #define T Patient_T
@@ -18,8 +17,8 @@ typedef enum {
 
 // 医疗记录实体
 typedef struct MedicalRecord {
+    long long time_stamp;
     RecordType type;
-    int date;
     int doctor_id;
     double cost;
     char detail[256];

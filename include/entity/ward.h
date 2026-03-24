@@ -1,8 +1,7 @@
 #ifndef HIS_WARD_H
 #define HIS_WARD_H
 
-#include <base.h>
-#include <list.h>
+#include <HIS_core.h>
 
 #define T Ward_T
 typedef struct Ward_T *T;
@@ -20,7 +19,6 @@ double Ward_get_cost(T w);
 // 修改器
 Status Ward_set_id(T w, int new_id);
 Status Ward_set_capacity(T w, int new_capacity);
-Status Ward_set_available(T w, int new_occupied);
 Status Ward_set_department(T w, Department new_department);
 Status Ward_set_cost(T w, double new_cost);
 

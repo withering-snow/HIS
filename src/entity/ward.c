@@ -21,7 +21,6 @@ double Ward_get_cost(Ward_T w){}
 // 修改器
 Status Ward_set_id(Ward_T w, int new_id){}
 Status Ward_set_capacity(Ward_T w, int new_capacity){}
-Status Ward_set_available(Ward_T w, int new_occupied){}
 Status Ward_set_department(Ward_T w, Department new_department){}
 Status Ward_set_cost(Ward_T w, double new_cost){}
 

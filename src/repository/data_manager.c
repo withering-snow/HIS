@@ -1,7 +1,10 @@
 #include <data_manager.h>
 
 // 生命周期：全部实体链表构建与释放
-void Data_init() {}
+void Data_init() {
+    // doctors
+
+}
 void Data_destroy() {}
 
 // 获取对应链表
