@@ -19,7 +19,6 @@ double Ward_get_cost(T w);
 // 修改器
 Status Ward_set_id(T w, int new_id);
 Status Ward_set_capacity(T w, int new_capacity);
-Status Ward_set_available(T w, int new_occupied);
 Status Ward_set_department(T w, Department new_department);
 Status Ward_set_cost(T w, double new_cost);
 

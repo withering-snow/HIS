@@ -17,8 +17,8 @@ typedef enum {
 
 // 医疗记录实体
 typedef struct MedicalRecord {
+    long long time_stamp;
     RecordType type;
-    int date;
     int doctor_id;
     double cost;
     char detail[256];
