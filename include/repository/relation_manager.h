@@ -3,30 +3,23 @@
 
 #include <HIS_core.h>
 
-/**
- * @brief 医患关系记录
- */
-typedef struct {
-    int patient_id;
-    int doctor_id;
-    long long assigned_time;
-} Rel_DoctorPatient;
+typedef struct Rel_doc Rel_doc;
+typedef struct Rel_ward Rel_ward;
 
-/**
- * @brief 住院关系记录
- */
-typedef struct {
-    int patient_id;
-    int ward_id;
-    int bed_no;
-} Rel_PatientWard;
+void Rel_init();
+void Rel_destroy();
 
-// 绑定操作
-Status RelationMgr_assign_doctor(int pat_id, int doc_id);
-Status RelationMgr_assign_ward(int pat_id, int ward_id, int bed_no);
+int Rel_get_doctor_by_patient(int patient_id);
+List_T Rel_get_patient_by_doctor(int doctor_id);
 
-// 查询操作
-int    RelationMgr_get_doctor_by_patient(int pat_id);
-List_T RelationMgr_get_patients_by_doctor(int doc_id);
+int Rel_get_ward_by_patient(int patient_id);
+int Rel_get_bed_by_patient(int patient_id);
+long long Rel_get_time_stamp_by_patient(int patient_id);
+
+Status Rel_band_doc(int patient_id, int doctor_id);
+Status Rel_band_ward(int patient_id, int ward_id, int bed_id, long long time_stamp);
+
+Status Rel_remove_doc(int patient_id);
+Status Rel_remove_ward(int patient_id);
 
 #endif

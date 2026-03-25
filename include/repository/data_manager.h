@@ -9,10 +9,10 @@ void Data_init();
 void Data_destroy();
 
 // 获取对应链表
-List_T Data_get_doctors();
-List_T Data_get_funds();
-List_T Data_get_medicines();
-List_T Data_get_patients();
-List_T Data_get_wards();
+List_T Data_get_doctor();
+List_T Data_get_fund();
+List_T Data_get_medicine();
+List_T Data_get_patient();
+List_T Data_get_ward();
 
 #endif// HIS_DATA_MANAGER_H
