@@ -1,5 +1,11 @@
 #include <ward.h>
 
+typedef struct Bed_T {
+    int bed_id;
+    bool is_available;
+    int patient_id;
+}Bed_T;
+
 struct Ward_T {
     int id;
     int capacity;
