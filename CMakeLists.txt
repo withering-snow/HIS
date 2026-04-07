@@ -6,6 +6,12 @@ project(HIS
 
 set(CMAKE_C_STANDARD 11)
 
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
+set(CUSTOM_RGBA_AS_DEFAULT_FORMAT ON CACHE BOOL "" FORCE)
+
+add_subdirectory(lib/raylib-5.5)
+
 include_directories(
     include
     include/core
@@ -14,9 +20,17 @@ include_directories(
     include/service
     include/io
     include/ui
+    lib/raylib-5.5/src
 )
 
 file(GLOB_RECURSE SOURCES "src/*.c")
 
-# 3. 生成可执行文件
 add_executable(HIS ${SOURCES})
+
+target_link_libraries(HIS raylib)
+
+if(UNIX AND NOT APPLE)
+    target_link_libraries(HIS m pthread dl rt X11)
+endif()
+
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/data/pingfang.otf" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")

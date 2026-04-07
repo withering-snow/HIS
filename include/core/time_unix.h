@@ -14,6 +14,6 @@ long long Time_now(void);
  * @param time_stamp 传入时间戳
  * @return 返回对应的时间字符串
  */
-const char* Time_to_string(long time_stamp);
+const char* Time_to_string(long long time_stamp);
 
 #endif// HIS_TIME_UNIX_H
