@@ -11,7 +11,7 @@ struct Doctor_T {
 
 // 生命周期
 Doctor_T Doctor_new(int id, int age, int sex, Department department, const char* name) {
-    Doctor_T doctor;
+    Doctor_T doctor = (Doctor_T)safe_malloc(sizeof(struct Doctor_T));
     doctor->id=id;
     doctor->age=age;
     doctor->sex=sex;
@@ -20,8 +20,9 @@ Doctor_T Doctor_new(int id, int age, int sex, Department department, const char*
     return doctor;
 }
 void Doctor_free(Doctor_T* d) {
-    free(d);
-    d=NULL;
+    ASSERT(d!=NULL, "医生指针不能为空");
+    free(*d);
+    *d=NULL;
 }
 
 // 访问器
