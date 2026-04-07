@@ -27,46 +27,58 @@ void Doctor_free(Doctor_T* d) {
 
 // 访问器
 int Doctor_get_id(Doctor_T d) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     return d->id;
 }
 int Doctor_get_age(Doctor_T d) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     return d->age;
 }
 bool Doctor_get_sex(Doctor_T d) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     return d->sex;
 }
 bool Doctor_is_active(Doctor_T d) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     return d->is_active;
 }
 Department Doctor_get_department(Doctor_T d) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     return d->department;
 }
 const char* Doctor_get_name(Doctor_T d) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     return d->name;
 }
 
 // 修改器
 Status Doctor_set_id(Doctor_T d, int new_id) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     d->id=new_id;
     return HIS_OK;
 }
 Status Doctor_set_age(Doctor_T d, int new_age) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     d->age=new_age;
     return HIS_OK;
 }
 Status Doctor_set_sex(Doctor_T d, bool new_sex) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     d->sex=new_sex;
     return HIS_OK;
 }
 Status Doctor_set_is_active(Doctor_T d, bool new_is_active) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     d->is_active=new_is_active;
     return HIS_OK;
 }
 Status Doctor_set_department(Doctor_T d, Department new_department) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     d->department=new_department;
     return HIS_OK;
 }
 Status Doctor_set_name(Doctor_T d, const char* new_name) {
+    ASSERT(d!=NULL, "医生指针不能为空");
     strcpy(d->name, new_name);
     return HIS_OK;
 }
