@@ -11,7 +11,7 @@ T Fund_new(int patient_id, double remain);
 void Fund_free(T* f);
 
 // 充值：记录时间戳
-Status Fund_deposit(T f, double amount, const char* reason);
+Status Fund_deposit(T f, double amount);
 // 扣费：如果余额不足，返回错误码，且不记录流水
 Status Fund_withdraw(T f, double amount, const char* reason);
 
