@@ -10,6 +10,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdbool.h>
+#include <limits.h>
 #include <time.h>
 // ---------------- 可能使用的库 ---------------- //
 
@@ -125,7 +126,16 @@ static inline void *safe_malloc(size_t size) {
 
 
 
-// ---------------- 特殊类型定义 ---------------- //
+// ---------------- 工具 ---------------- //
+
+
+// 性别类型
+typedef enum{
+    FEMALE = 0,
+    MALE = 1
+}gender;
+
+
 // 通用比较器声明
 /**
  * @note 对于此比较器：
@@ -134,7 +144,25 @@ static inline void *safe_malloc(size_t size) {
  * 否则，返回一个负数
  */
 typedef int (*compare)(const void *a, const void *b);
-// ---------------- 特殊类型定义 ---------------- //
+
+
+// 以下为对于实体的通用内部id工具
+/**
+ * @brief id生成器，基于当前静态变量 id_counter
+ * 若已经达到上限，会返回-1
+ */
+#define NEW_ID() \
+    ((_id_counter < INT_MAX)? (_id_counter++): -1)
+
+/**
+ * @brief 加载实体时，需要使用此函数用于记录当前最大id
+ * @param id 当前加载的id
+ */
+#define LOAD_ID(id) \
+    do{ \
+        if(id > _id_counter) _id_counter = id; \
+    while(0);
+// ---------------- 工具 ---------------- //
 
 
 

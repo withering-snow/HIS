@@ -11,3 +11,28 @@ const char* Time_to_string(long long time_stamp) {
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", tm_tar);
     return buf;
 }
+
+int Time_CalculateAge(long long birth_ts) {
+    if (birth_ts <= 0) return 0;
+
+    time_t now = time(NULL);
+    struct tm *l_now = localtime(&now);
+
+    int now_y = l_now->tm_year + 1900;
+    int now_m = l_now->tm_mon + 1;
+    int now_d = l_now->tm_mday;
+
+    time_t b_time = (time_t)birth_ts;
+    struct tm *l_birth = localtime(&b_time);
+
+    int birth_y = l_birth->tm_year + 1900;
+    int birth_m = l_birth->tm_mon + 1;
+    int birth_d = l_birth->tm_mday;
+
+    int age = now_y - birth_y;
+    if (now_m < birth_m ||
+        (now_m == birth_m && now_d < birth_d) )
+        age--;
+
+    return (age < 0) ? 0 : age;
+}

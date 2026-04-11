@@ -1,40 +1,101 @@
 #include <patient.h>
 
+
+
+
+// 病人实体使用的id分配计数器，必须定义
+static int _id_counter = 0;
+
+
+
+
+// Patient实体具体定义
 struct Patient_T {
-    int id;
-    int age;
-    int sex;
-    char name[32];
-    List_T record;
+    int         id;         // 内部id
+    gender      gender;     // 性别
+    long long   birth_ts;   // 出生日期时间戳
+    char        name[32];   // 姓名
+    char        phone[12];  // 电话号码
+    char        id_card[20];// 身份证号
 };
 
+
+
+
+
 // 生命周期
-Patient_T Patient_new(int id, int age, int sex, const char *name) {}
-void Patient_free(Patient_T *p) {}
+Patient_T Patient_new(
+    gender gender, long long birth_ts, const char *name,
+    const char *phone_num, const char *identity_id){
+}
+
+Patient_T Patient_load(
+    int id,
+    gender gender, long long birth_ts, const char *name,
+    const char *phone, const char *id_card){
+}
+
+void Patient_free(Patient_T *p){
+
+}
+
+
+
 
 // 访问器
-int Patient_get_id(Patient_T p) {}
-int Patient_get_age(Patient_T p) {}
-int Patient_get_sex(Patient_T p) {}
-char *Patient_get_name(Patient_T p) {}
+int Patient_get_id(Patient_T p){
+}
 
-// 修改器
-Status Patient_set_id(Patient_T p, int new_id) {}
-Status Patient_set_age(Patient_T p, int new_age) {}
-Status Patient_set_sex(Patient_T p, int new_sex) {}
-Status Patient_set_name(Patient_T p, const char *new_name) {}
+gender Patient_get_gender(Patient_T p){
+}
 
-// 对医疗记录的访问器与修改器
-int Patient_get_record_count(Patient_T p) {}
-const struct MedicalRecord *Patient_get_record(Patient_T p, int index) {}
-Status Patient_add_record(Patient_T p, const struct MedicalRecord *new_record) {}
-Status Patient_set_record(Patient_T p, const struct MedicalRecord *new_record) {}
+long long Patient_get_birth_ts(Patient_T p){
+}
 
-// 比较器
-int Patient_cmp_id(const void *a, const void *b){}
-int Patient_cmp_age(const void *a, const void *b){}
-int Patient_cmp_name(const void *a, const void *b){}
-int Patient_cmp_record(const void *a, const void *b){}
+int Patient_get_age(Patient_T p){
+}
 
-// 模糊姓名搜索比较器
-int Patient_cmp_fuzzy(const void *a, const void *b){}
+char * Patient_get_name(Patient_T p){
+}
+
+char * Patient_get_phone(Patient_T p){
+}
+
+char * Patient_get_id_card(Patient_T p){
+}
+
+
+
+
+// 重装载： 在校验数据合法性后，将所有数据进行覆盖
+Status Patient_update(Patient_T p, const Patient_Update_Pack *pack){
+}
+
+
+
+
+// 比较器详细定义见 base.h
+int Patient_cmp_id(const void *a, const void *b){
+}
+
+int Patient_cmp_gender(const void *a, const void *b){
+}
+
+int Patient_cmp_age(const void *a, const void *b){
+}
+
+int Patient_cmp_name(const void *a, const void *b){
+}
+
+int Patient_cmp_phone(const void *a, const void *b){
+}
+
+int Patient_cmp_id_card(const void *a, const void *b){
+}
+
+
+
+
+// 模糊姓名搜索器
+int Patient_cmp_fuzzy(const void *a, const void *b){
+}

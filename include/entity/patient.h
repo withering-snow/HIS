@@ -7,110 +7,61 @@
 #define T Patient_T
 typedef struct T *T;
 
-// 医疗记录类型
-typedef enum {
-    REC_REGISTRATION, // 挂号
-    REC_CONSULTATION, // 看诊
-    REC_EXAMINATION,  // 检查
-    REC_PRESCRIPTION, // 买药
-    REC_ADMISSION,    // 住院
-    REC_DISCHARGE,    // 出院
-    REC_TRANSFER      // 变动
-} RecordType;
-
-// 1. 挂号详情
-typedef struct {
-    int dept_id;
-    int doctor_id;
-    int sequence_no; // 挂号序号
-} DataRegistration;
-
-// 2. 看诊详情
-typedef struct {
-    int doctor_id;
-    char diagnosis[128]; // 诊断结果
-    char advice[128];    // 医嘱
-} DataConsultation;
-
-// 3. 检查详情
-typedef struct {
-    char exam_name[64];  // 检查项名称
-    double unit_cost;    // 单价
-} DataExamination;
-
-// 4. 开药详情
-typedef struct {
-    int medicine_id;
-    int count;
-} DataPrescription;
-
-// 5. 入院详情
-typedef struct {
-    int ward_id;
-    int bed_id;
-    double deposit;      // 交纳的押金
-} DataAdmission;
-
-// 6. 床位变动
-typedef struct {
-    int from_ward_id;
-    int to_ward_id;
-    int from_bed_id;
-    int to_bed_id;
-} DataBedMove;
-
-// 7. 医生变动
-typedef struct {
-    int old_doc_id;
-    int new_doc_id;
-} DataDocChange;
-
-// 医疗记录实体
-typedef struct MedicalRecord {
-    long long time_stamp;
-    RecordType type;
-    double total_cost;   // 这一项操作产生的总费用 (挂号费、检查费等)
-    union {
-        DataRegistration reg;
-        DataConsultation cons;
-        DataExamination exam;
-        DataPrescription drug;
-        DataAdmission admit;
-        DataBedMove move;
-        DataDocChange change;
-        char summary[256];       // 通用备注/出院小结
-    } detail;
-} MedicalRecord;
 
 // 生命周期
-T Patient_new(int id, int age, int sex, const char *name);
+T Patient_new(
+    gender gender, long long birth_ts, const char *name,
+    const char *phone_num, const char *identity_id)
+;
+T Patient_load(
+    int id,
+    gender gender, long long birth_ts, const char *name,
+    const char *phone, const char *id_card)
+;
+/* TODO: 你不会问我为什么这里有两个函数吧……
+ * new  负责对新增的成员进行分配，这包括id的分配，详见位于base.h中的NEW_ID
+ * load 负责在加载文件的时候进行分配，也就是说id已知，传入即可，不过需要更新id的最大值，详见位于base.h中的LOAD_ID
+ */
 void Patient_free(T *p);
 
+
 // 访问器
-int Patient_get_id(T p);
-int Patient_get_age(T p);
-int Patient_get_sex(T p);
-char *Patient_get_name(T p);
+int          Patient_get_id(T p);
+gender       Patient_get_gender(T p);
+long long    Patient_get_birth_ts(T p);
+int          Patient_get_age(T p);      // TODO: 这里年龄计算记得调用 time_unix 中的计算函数
+char *       Patient_get_name(T p);
+char *       Patient_get_phone(T p);
+char *       Patient_get_id_card(T p);
 
-// 修改器
-Status Patient_set_id(T p, int new_id);
-Status Patient_set_age(T p, int new_age);
-Status Patient_set_sex(T p, int new_sex);
-Status Patient_set_name(T p, const char *new_name);
 
-// 医疗记录管理
-int Patient_get_record_count(T p);
-const struct MedicalRecord *Patient_get_record(T p, int index);
-Status Patient_add_record(T p, const struct MedicalRecord *new_record);
-Status Patient_set_record(T p, const struct MedicalRecord *new_record);
+// 公开的重装载的数据包
+typedef struct {
+    gender      gender;     // 性别
+    long long   birth_ts;   // 出生日期时间戳
+    char        name[32];   // 姓名
+    char        phone[12];  // 电话号码
+    char        id_card[20];// 身份证号
+} Patient_Update_Pack;
+// 重装载： 在校验数据合法性后，将所有数据进行覆盖
+Status Patient_update(T p, const Patient_Update_Pack *pack);
 
-// 比较器
+
+// 比较器详细定义见 base.h
 int Patient_cmp_id(const void *a, const void *b);
+int Patient_cmp_gender(const void *a, const void *b);
 int Patient_cmp_age(const void *a, const void *b);
 int Patient_cmp_name(const void *a, const void *b);
-int Patient_cmp_record(const void *a, const void *b);
+int Patient_cmp_phone(const void *a, const void *b);
+int Patient_cmp_id_card(const void *a, const void *b);
 
-// 模糊姓名搜索比较器
+
+/**
+ * @brief 模糊姓名搜索器
+ * @param a 被传入的字符串
+ * @param b 搜索依据关键字
+ * @return 只要关键字存在就返回 0
+ */
 int Patient_cmp_fuzzy(const void *a, const void *b);
 
 #undef T
