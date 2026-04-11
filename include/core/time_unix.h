@@ -16,4 +16,11 @@ long long Time_now(void);
  */
 const char* Time_to_string(long long time_stamp);
 
+/**
+ * @brief 根据出生时间戳计算当前年龄
+ * @param birth_ts 出生时的 Unix 时间戳
+ * @return 整数周岁
+ */
+int Time_CalculateAge(long long birth_ts);
+
 #endif// HIS_TIME_UNIX_H
