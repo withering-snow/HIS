@@ -22,9 +22,18 @@ typedef enum {
 } RecordType;
 
 // 挂号详情
+typedef enum{
+    APPOINTMENT,      // 预约
+    WAITING,          // 候诊
+    COMPLETED         // 诊毕
+}RegistrationStatus;  // 挂号状态
 typedef struct {
     long long   doc_id;
-    long long   sequence_no;    // 挂号序号
+    int         sequence_no;    // 挂号序号
+    int         target_date;    // 挂号目标日期（注意是形如“20260412”的int类型，还请注意转换）
+    int         time_frame;     // 挂号时段（后续以索引形式分割不同挂号时段）
+    RegistrationStatus
+                status;         // 当前挂号状态
 } DataRegistration;
 // 看诊详情
 typedef struct {
@@ -77,7 +86,7 @@ T Rec_load(
 ;
 T Rec_reg_new(
     long long cost, long long pat_id,
-    long long doc_id, long long sequence_no)
+    long long doc_id, int sequence_no, int target_date, int time_frame, RegistrationStatus status);
 ;
 T Rec_cons_new(
     long long cost, long long pat_id,

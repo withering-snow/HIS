@@ -48,8 +48,8 @@ Record_T Rec_load(
 }
 Record_T Rec_reg_new(
     long long cost, long long pat_id,
-    long long doc_id, long long sequence_no){
-
+    long long doc_id, int sequence_no, int target_date, int time_frame, RegistrationStatus status){
+    
 }
 Record_T Rec_cons_new(
     long long cost, long long pat_id,
