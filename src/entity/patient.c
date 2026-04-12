@@ -15,7 +15,7 @@ struct Patient_T {
     gender      gender;     // 性别
     long long   birth_ts;   // 出生日期时间戳
     char        name[32];   // 姓名
-    char        phone[12];  // 电话号码
+    char        phone[20];  // 电话号码
     char        id_card[20];// 身份证号
 };
 
@@ -46,7 +46,7 @@ void Patient_free(Patient_T *p){
 long long Patient_id(Patient_T p){
 }
 
-gender Patien_gender(Patient_T p){
+gender Patient_gender(Patient_T p){
 }
 
 long long Patient_birth_ts(Patient_T p){

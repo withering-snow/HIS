@@ -1,39 +1,132 @@
 #include <doctor.h>
 
+
+
+
 struct Doctor_T {
-    int id;
-    int age;
-    bool sex;
-    bool is_active;
-    Department department;
-    char name[32];
+    long long   id;           // 内部id
+    gender      gender;       // 性别
+    long long   birth_ts;     // 出生日期时间戳
+    bool        is_active;    // 出诊状态
+    Department  dept;         // 科室
+    DoctorTitle title;        // 职称
+    char        name[32];     // 姓名
+    char        phone[20];    // 手机号
+    char        id_card[20];  // 身份证号
 };
 
+
+
+
 // 生命周期
-Doctor_T Doctor_new(int id, int age, int sex, Department department, const char* name){}
-void Doctor_free(Doctor_T* d){}
+Doctor_T Doctor_load(
+    long long id,
+    gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
+    const char* name, const char* phone, const char* id_card){
 
-// 访问器
-int Doctor_get_id(Doctor_T d){}
-int Doctor_get_age(Doctor_T d){}
-bool Doctor_get_sex(Doctor_T d){}
-bool Doctor_is_active(Doctor_T d){}
-Department Doctor_get_department(Doctor_T d){}
-const char* Doctor_get_name(Doctor_T d){}
+}
+Doctor_T Doctor_new(
+    gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
+    const char* name, const char* phone, const char* id_card){
 
-// 修改器
-Status Doctor_set_id(Doctor_T d, int new_id){}
-Status Doctor_set_age(Doctor_T d, int new_age){}
-Status Doctor_set_sex(Doctor_T d, bool new_sex) {}
-Status Doctor_set_is_active(Doctor_T d, bool new_is_active) {}
-Status Doctor_set_department(Doctor_T d, Department new_department){}
-Status Doctor_set_name(Doctor_T d, const char* new_name){}
+}
 
-// 比较器
-int Doctor_cmp_id(const void *a, const void *b){}
-int Doctor_cmp_age(const void *a, const void *b){}
-int Doctor_cmp_department(const void *a, const void *b){}
-int Doctor_cmp_name(const void *a, const void *b){}
+void Doctor_free(Doctor_T* d){
 
-// 模糊姓名搜索比较器
-int Doctor_cmp_fuzzy(const void *a, const void *b){}
+}
+
+
+
+
+long long Doctor_id(Doctor_T d){
+
+}
+
+gender Doctor_gender(Doctor_T d){
+
+}
+
+long long Doctor_birth_ts(Doctor_T d){
+
+}
+
+int Doctor_age(Doctor_T d){
+
+}
+
+bool Doctor_is_active(Doctor_T d){
+
+}
+
+Department Doctor_dept(Doctor_T d){
+
+}
+
+DoctorTitle Doctor_title(Doctor_T d){
+
+}
+
+const char * Doctor_name(Doctor_T d){
+
+}
+
+const char * Doctor_phone(Doctor_T d){
+
+}
+
+const char * Doctor_id_card(Doctor_T d){
+
+}
+
+
+
+
+Status Doctor_update(Doctor_T d, const Doctor_Update_Pack *pack){
+
+}
+
+
+
+
+int Doctor_cmp_id(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_gender(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_age(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_is_active(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_dept(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_title(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_name(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_phone(const void *a, const void *b){
+
+}
+
+int Doctor_cmp_id_card(const void *a, const void *b){
+
+}
+
+
+
+
+int Doctor_cmp_fuzzy(const void *a, const void *b){
+
+}

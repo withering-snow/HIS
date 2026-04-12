@@ -27,7 +27,7 @@ void Patient_free(T *p);
 
 // 访问器
 long long    Patient_id(T p);
-gender       Patien_gender(T p);
+gender       Patient_gender(T p);
 long long    Patient_birth_ts(T p);
 int          Patient_age(T p);      // TODO: 这里年龄计算记得调用 time_unix 中的计算函数
 char *       Patient_name(T p);
@@ -40,7 +40,7 @@ typedef struct {
     gender      gender;     // 性别
     long long   birth_ts;   // 出生日期时间戳
     char        name[32];   // 姓名
-    char        phone[12];  // 电话号码
+    char        phone[20];  // 电话号码
     char        id_card[20];// 身份证号
 } Patient_Update_Pack;
 // 重装载： 在校验数据合法性后，将所有数据进行覆盖
@@ -58,7 +58,7 @@ int Patient_cmp_id_card(const void *a, const void *b);
 
 /**
  * @brief 模糊姓名搜索器
- * @param a 被传入的字符串
+ * @param a 被传入的结构体
  * @param b 搜索依据关键字
  * @return 只要关键字存在就返回 0
  */
