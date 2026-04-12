@@ -43,25 +43,25 @@ void Patient_free(Patient_T *p){
 
 
 // 访问器
-long long Patient_get_id(Patient_T p){
+long long Patient_id(Patient_T p){
 }
 
-gender Patient_get_gender(Patient_T p){
+gender Patien_gender(Patient_T p){
 }
 
-long long Patient_get_birth_ts(Patient_T p){
+long long Patient_birth_ts(Patient_T p){
 }
 
-int Patient_get_age(Patient_T p){
+int Patient_age(Patient_T p){
 }
 
-char * Patient_get_name(Patient_T p){
+char * Patient_name(Patient_T p){
 }
 
-char * Patient_get_phone(Patient_T p){
+char * Patient_phone(Patient_T p){
 }
 
-char * Patient_get_id_card(Patient_T p){
+char * Patient_id_card(Patient_T p){
 }
 
 

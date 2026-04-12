@@ -49,7 +49,7 @@ Record_T Rec_load(
 Record_T Rec_reg_new(
     long long cost, long long pat_id,
     long long doc_id, int sequence_no, int target_date, int time_frame, RegistrationStatus status){
-    
+
 }
 Record_T Rec_cons_new(
     long long cost, long long pat_id,
@@ -95,23 +95,23 @@ void Rec_free(Record_T* r){
 
 
 // 获取公共属性
-RecordType Rec_get_type(Record_T r){
+RecordType Rec_type(Record_T r){
 
 }
 
-bool Rec_get_is_invalid(Record_T r){
+bool Rec_is_invalid(Record_T r){
 
 }
 
-long long Rec_get_pat_id(Record_T r){
+long long Rec_pat_id(Record_T r){
 
 }
 
-long long Rec_get_time_stamp(Record_T r){
+long long Rec_time_stamp(Record_T r){
 
 }
 
-long long Rec_get_cost(Record_T r){
+long long Rec_cost(Record_T r){
 
 }
 

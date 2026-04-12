@@ -26,13 +26,13 @@ void Patient_free(T *p);
 
 
 // 访问器
-long long    Patient_get_id(T p);
-gender       Patient_get_gender(T p);
-long long    Patient_get_birth_ts(T p);
-int          Patient_get_age(T p);      // TODO: 这里年龄计算记得调用 time_unix 中的计算函数
-char *       Patient_get_name(T p);
-char *       Patient_get_phone(T p);
-char *       Patient_get_id_card(T p);
+long long    Patient_id(T p);
+gender       Patien_gender(T p);
+long long    Patient_birth_ts(T p);
+int          Patient_age(T p);      // TODO: 这里年龄计算记得调用 time_unix 中的计算函数
+char *       Patient_name(T p);
+char *       Patient_phone(T p);
+char *       Patient_id_card(T p);
 
 
 // 公开的重装载的数据包

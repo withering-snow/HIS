@@ -121,11 +121,11 @@ void Rec_free(T* r);
 
 
 // 获取公共属性
-RecordType Rec_get_type(T r);
-bool       Rec_get_is_invalid(T r);
-long long  Rec_get_pat_id(T r);
-long long  Rec_get_time_stamp(T r);
-long long  Rec_get_cost(T r);
+RecordType Rec_type(T r);
+bool       Rec_is_invalid(T r);
+long long  Rec_pat_id(T r);
+long long  Rec_time_stamp(T r);
+long long  Rec_cost(T r);
 // 返回详情区域的指针，外部根据 Rec_type(r) 强转为 DataRegistration* 等
 void* Rec_detail(T r);
 
