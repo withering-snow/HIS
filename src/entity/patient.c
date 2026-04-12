@@ -4,14 +4,14 @@
 
 
 // 病人实体使用的id分配计数器，必须定义
-static int _id_counter = 0;
+static long long _id_counter = 0;
 
 
 
 
 // Patient实体具体定义
 struct Patient_T {
-    int         id;         // 内部id
+    long long   id;         // 内部id
     gender      gender;     // 性别
     long long   birth_ts;   // 出生日期时间戳
     char        name[32];   // 姓名
@@ -30,7 +30,7 @@ Patient_T Patient_new(
 }
 
 Patient_T Patient_load(
-    int id,
+    long long id,
     gender gender, long long birth_ts, const char *name,
     const char *phone, const char *id_card){
 }
@@ -43,7 +43,7 @@ void Patient_free(Patient_T *p){
 
 
 // 访问器
-int Patient_get_id(Patient_T p){
+long long Patient_get_id(Patient_T p){
 }
 
 gender Patient_get_gender(Patient_T p){

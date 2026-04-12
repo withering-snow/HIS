@@ -14,7 +14,7 @@ T Patient_new(
     const char *phone_num, const char *identity_id)
 ;
 T Patient_load(
-    int id,
+    long long id,
     gender gender, long long birth_ts, const char *name,
     const char *phone, const char *id_card)
 ;
@@ -26,7 +26,7 @@ void Patient_free(T *p);
 
 
 // 访问器
-int          Patient_get_id(T p);
+long long    Patient_get_id(T p);
 gender       Patient_get_gender(T p);
 long long    Patient_get_birth_ts(T p);
 int          Patient_get_age(T p);      // TODO: 这里年龄计算记得调用 time_unix 中的计算函数

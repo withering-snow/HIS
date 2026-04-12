@@ -152,7 +152,7 @@ typedef int (*compare)(const void *a, const void *b);
  * 若已经达到上限，会返回-1
  */
 #define NEW_ID() \
-    ((_id_counter < INT_MAX)? (_id_counter++): -1)
+    ((_id_counter < LLONG_MAX)? (_id_counter++): -1)
 
 /**
  * @brief 加载实体时，需要使用此函数用于记录当前最大id
