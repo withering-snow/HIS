@@ -79,6 +79,12 @@ Status Medicine_deduct(T m, int amount);
  * @param batch_id 批次内部 ID
  */
 Status Medicine_discard_batch(T m, long long batch_id);
+
+// 从表的比较器
+// 按过期时间排序
+int Medicine_batch_cmp_expire(const void* a, const void* b);
+int Medicine_batch_cmp_id(const void* a, const void* b);
+int Medicine_batch_cmp_remain(const void* a, const void* b);
 /* ---------------- 从表 ----------------- */
 
 
