@@ -18,7 +18,9 @@ typedef enum {
     REC_ADMISSION,    // 住院
     REC_DISCHARGE,    // 出院
     REC_CHANGE_BED,   // 床位变动
-    REC_CHANGE_DOC    // 医生变动
+    REC_CHANGE_DOC,   // 医生变动
+    REC_STOCK_IN,     // 进货
+    REC_STOCK_OUT     // 废弃
 } RecordType;
 
 // 挂号详情
@@ -75,6 +77,22 @@ typedef struct {
     long long   old_doc_id;
     long long   new_doc_id;
 } DataChangeDoc;
+// 进货详情
+typedef struct{
+    long long   med_id;
+    long long   batch_id;
+    long long   buy_price;      // 进价（单价）
+    long long   expire_ts;      // 过期时间
+    int         total;          // 总购入量
+    char        batch_no[32];   // 批号
+}DataStackIn;
+// 报废详情
+typedef struct{
+    long long   med_id;
+    long long   batch_id;
+    int         total;          // 总报废量
+    char        batch_no[32];   // 批号
+}DataStackOut;
 
 
 
@@ -117,13 +135,22 @@ T Rec_c_doc_new(
     long long cost, long long pat_id,
     long long old_doc_id, long long new_doc_id)
 ;
+T Rec_s_in_new(
+    long long cost, long long admin_id,
+    long long med_id, long long batch_id, long long buy_price,
+    long long expire_ts, int total, const char* batch_no)
+;
+T Rec_s_out_new(
+    long long cost, long long admin_id,
+    long long med_id, long long batch_id, int total, const char* batch_no)
+;
 void Rec_free(T* r);
 
 
 // 获取公共属性
 RecordType Rec_type(T r);
 bool       Rec_is_invalid(T r);
-long long  Rec_pat_id(T r);
+long long  Rec_actor_id(T r);
 long long  Rec_time_stamp(T r);
 long long  Rec_cost(T r);
 // 返回详情区域的指针，外部根据 Rec_type(r) 强转为 DataRegistration* 等

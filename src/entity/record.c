@@ -4,8 +4,8 @@
 // 医疗记录实体
 struct Record_T {
     RecordType      type;
-    bool            is_invalid;
-    long long       pat_id;
+    bool            is_invalid; // 是否被废弃
+    long long       actor_id;   // 行为主体id
     long long       time_stamp;
     long long       cost;
     union {
@@ -17,7 +17,9 @@ struct Record_T {
         DataDischarge       disc;
         DataChangeBed       c_bed;
         DataChangeDoc       c_doc;
-    } detail;
+        DataStackIn         s_in;
+        DataStackOut        s_out;
+    }               detail;
 };
 
 
@@ -38,7 +40,7 @@ Record_T Rec_load(
     // 填充公共头部
     r->type = type;
     r->is_invalid = is_invalid;
-    r->pat_id = pat_id;
+    r->actor_id = pat_id;
     r->time_stamp = time_stamp;
     r->cost = cost;
 
@@ -103,7 +105,7 @@ bool Rec_is_invalid(Record_T r){
 
 }
 
-long long Rec_pat_id(Record_T r){
+long long Rec_actor_id(Record_T r){
 
 }
 
