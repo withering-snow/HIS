@@ -56,6 +56,7 @@ typedef enum {
 // ---------------- 科室相关 ---------------- //
 // 科室枚举定义
 typedef enum {
+    DEP_NONE = 0,         // 不属于任何科室
     DEP_INTERNAL,         // 内科
     DEP_SURGERY,          // 外科
     DEP_PEDIATRICS,       // 儿科
@@ -67,7 +68,7 @@ typedef enum {
     DEP_RADIOLOGY,        // 放射科
     DEP_LABORATORY,       // 检验科
     DEP_PHARMACY,         // 药剂科
-    DEP_COUNT             // 枚举计数器 = 11
+    DEP_COUNT             // 枚举计数器
 }Department;
 
 // 科室与文字的转换
