@@ -27,7 +27,7 @@ struct Patient_T {
 Patient_T Patient_new(
     gender gender, long long birth_ts, const char *name,
     const char *phone_num, const char *identity_id){
-    Patient_T p=malloc(sizeof(struct Patient_T));
+    Patient_T p=safe_malloc(sizeof(struct Patient_T));
     p->id=_id_counter;
     (_id_counter<LLONG_MAX)?_id_counter++:-1;
     ASSERT(p !=NULL,"不合法");
@@ -43,7 +43,7 @@ Patient_T Patient_load(
     long long id,
     gender gender, long long birth_ts, const char *name,
     const char *phone, const char *id_card){
-    Patient_T p=malloc(sizeof(struct Patient_T));
+    Patient_T p=safe_malloc(sizeof(struct Patient_T));
     ASSERT(p !=NULL,"不合法");
     p->id=id;
     if (id>_id_counter) _id_counter=id;
