@@ -163,6 +163,20 @@ typedef int (*compare)(const void *a, const void *b);
     do{ \
         if(id > _id_counter) _id_counter = id; \
     while(0);
+
+
+/**
+ * @brief 密码加密与解密，原理为循环 XOR 混淆
+ * @param data 需要混淆的数据（明文密码）
+ * @param data_len 数据长度 (通常是 strlen(data))
+ */
+static inline void cipher_xor_cyclic(char* data, size_t data_len) {
+    const char* key = "HIS_XOR";
+    size_t key_len = strlen(key);
+    for (size_t i = 0; i < data_len; i++) {
+        data[i] ^= key[i % key_len];
+    }
+}
 // ---------------- 工具 ---------------- //
 
 
