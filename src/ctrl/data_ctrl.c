@@ -1,5 +1,8 @@
 #include <data_ctrl.h>
 
+
+
+
 static List_T Account_list;
 static List_T Doctor_list;
 static List_T Fund_list;
@@ -7,6 +10,9 @@ static List_T Medicine_list;
 static List_T Patient_list;
 static List_T Record_list;
 static List_T Ward_list;
+
+
+
 
 // 生命周期：全部实体链表构建与释放
 void Data_init() {
@@ -18,6 +24,10 @@ void Data_init() {
     Record_list     = List_new(sizeof(Record_T));
     Ward_list       = List_new(sizeof(Ward_T));
 }
+
+
+
+
 void Data_destroy() {
     Account_T acc = (Account_T)List_first(Account_list);
     while (acc != NULL) {
@@ -68,6 +78,9 @@ void Data_destroy() {
     }
     List_free(& Ward_list);
 }
+
+
+
 
 // 获取对应链表
 List_T Data_get_account(){
