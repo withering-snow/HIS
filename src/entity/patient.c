@@ -44,8 +44,7 @@ Patient_T Patient_load(
     const char *phone, const char *id_card){
     Patient_T p=safe_malloc(sizeof(struct Patient_T));
     ASSERT(p !=NULL,"不合法");
-    p->id=id;
-    if (id>_id_counter) _id_counter=id;
+    LOAD_ID(id);
     p->gender=gender;
     p->birth_ts=birth_ts;
     strncpy(p->name,name,32);
