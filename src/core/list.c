@@ -1,5 +1,4 @@
-#include <../include/core/list.h>
-#include <string.h>
+#include <list.h>
 
 typedef struct Node {
     struct Node *prev;
@@ -72,6 +71,11 @@ void List_remove(List_T l, void *data_ptr) {
     ASSERT(l && data_ptr, "参数不能为空");
     PNode target = GET_NODE(data_ptr);
     ASSERT(target != l->dummy, "不能删除 dummy 节点");
+
+    // 如果正在遍历，回退游标
+    if (l->cursor == target){
+        l->cursor = target->prev;
+    }
 
     target->prev->next = target->next;
     target->next->prev = target->prev;
