@@ -28,8 +28,7 @@ Patient_T Patient_new(
     gender gender, long long birth_ts, const char *name,
     const char *phone_num, const char *identity_id){
     Patient_T p=safe_malloc(sizeof(struct Patient_T));
-    p->id=_id_counter;
-    (_id_counter<LLONG_MAX)?_id_counter++:-1;
+    p->id=NEW_ID();
     ASSERT(p !=NULL,"不合法");
     p->gender=gender;
     p->birth_ts=birth_ts;
