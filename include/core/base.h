@@ -162,7 +162,7 @@ typedef int (*compare)(const void *a, const void *b);
 #define LOAD_ID(id) \
     do{ \
         if(id > _id_counter) _id_counter = id; \
-    while(0);
+    }while(0)
 
 
 /**
