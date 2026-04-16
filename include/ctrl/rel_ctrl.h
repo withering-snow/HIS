@@ -3,90 +3,116 @@
 
 #include <HIS_core.h>
 
-typedef struct Rel_doc Rel_doc;
-typedef struct Rel_ward Rel_ward;
+
+typedef struct Rel_doc {
+    long long pat_id;
+    long long doc_id;
+}Rel_doc;
+
+typedef struct Rel_ward {
+    long long pat_id;
+    long long ward_id;
+}Rel_ward;
 
 
-// 生命周期
+/*
+ * Rel_Ctrl
+ * 管理“病人-医生”逻辑绑定与“病人-病房”的高位路由索引。
+ * 不持有物理状态。
+ * 床位与时间戳等物理数据请通过本模块返回的 ID 进一步访问 Ward 模块获取。
+ */
+
+// =============================================================================
+// 生命周期管理
+
 /**
- * @brief 初始化所有关系链表
+ * @brief 初始化全局关系
  */
 void Rel_init();
 
 /**
- * @brief 销毁所有关系链表
+ * @brief 销毁关系链表
  */
 void Rel_destroy();
 
 
-// 关系查询
-/**
- * @brief 查询一个病人的主治医生
- * @param patient_id 查询依据：病人id
- * @return 返回对应的医生id,若不存在返回-10
- */
-int Rel_get_doctor_by_patient(int patient_id);
+// =============================================================================
+// 医患关系逻辑
 
-/**
- * @brief 查询一个医生正在治疗的病人
- * @param doctor_id 查询依据：医生id
- * @return 返回对应的病人id链表，注意需要释放
- */
-List_T Rel_get_patient_by_doctor(int doctor_id);
-
-/**
- * @brief 查询一个病人所在的病房
- * @param patient_id 查询依据：病人id
- * @return 返回对应的病房号，若不存在返回-10
- */
-int Rel_get_ward_by_patient(int patient_id);
-
-/**
- * @brief 查询一个病人的病床号
- * @param patient_id 查询依据：病人id
- * @return 返回对应的病床号，若不存在返回-10
- */
-int Rel_get_bed_by_patient(int patient_id);
-
-/**
- * @brief 查询一个病人的入院时间戳
- * @param patient_id 查询依据：病人id
- * @return 返回对应的入院时间戳，若不存在返回-10
- */
-long long Rel_get_time_stamp_by_patient(int patient_id);
-
-
-// 关系绑定与移除
 /**
  * @brief 绑定医患关系
- * @param patient_id 病人id
- * @param doctor_id 医生id
  * @return 状态码
  */
-Status Rel_band_doc(int patient_id, int doctor_id);
+Status Rel_bind_doctor(long long patient_id, long long doctor_id);
 
 /**
- * @brief 绑定住院关系
- * @param patient_id 病人id
- * @param ward_id 病房id
- * @param bed_id 床位id
- * @param time_stamp 入院时间戳
+ * @brief 解除病人的医生分配
  * @return 状态码
  */
-Status Rel_band_ward(int patient_id, int ward_id, int bed_id, long long time_stamp);
+Status Rel_unbind_doctor(long long patient_id);
 
 /**
- * @brief 删除医患关系
- * @param patient_id 病人id
- * @return 状态码
+ * @brief 查询病人的主治医生 ID
+ * @return 医生 ID，若未分配返回 INVALID_ID
  */
-Status Rel_remove_doc(int patient_id);
+long long Rel_get_doctor_by_patient(long long patient_id);
 
 /**
- * @brief 删除住院关系
- * @param patient_id 病人id
- * @return 状态码
+ * @brief 反向查询：获取某位医生负责的所有病人 ID 集合
+ * @return 包含 patient_id 的 List_T
+ * @note ============ [内存警示] 调用者必须使用 List_free 释放返回的容器 ============
  */
-Status Rel_remove_ward(int patient_id);
+List_T Rel_get_patients_by_doctor(long long doctor_id);
 
-#endif
+
+// =============================================================================
+// 住院路由导航
+
+/**
+ * @brief 建立住院路由索引
+ * @note 仅记录病人所在的病房，不涉及具体床位 (Bed_T 由 Ward 模块管理)
+ */
+Status Rel_bind_ward(long long patient_id, long long ward_id);
+
+/**
+ * @brief 注销住院
+ */
+Status Rel_unbind_ward(long long patient_id);
+
+/**
+ * @brief 快速定位病人所在的病房 ID
+ * @return 病房 ID 或错误码
+ * @note 拿到此 ID 后，可配合 Data_Ctrl 获取 Ward 对象，进而读取 Bed_T 中的 start_ts
+ */
+long long Rel_get_ward_by_patient(long long patient_id);
+
+/**
+ * @brief 反向查询：获取某个病房内的所有病人 ID 集合
+ * @return 包含 patient_id 的 List_T
+ * @note ============ [内存警示] 调用者必须使用 List_free 释放返回的容器 ============
+ */
+List_T Rel_get_patients_by_ward(long long ward_id);
+
+
+// =============================================================================
+// 快捷状态检索
+
+/**
+ * @brief 检查病人当前是否处于在院状态 (是否有住院路由)
+ */
+bool Rel_is_patient_admitted(long long patient_id);
+
+/**
+ * @brief 检查病人当前是否已分配医生
+ */
+bool Rel_has_doctor(long long patient_id);
+
+
+// =============================================================================
+// 对返回的链表提供释放工具
+/**
+ * @brief 辅助工具：清空并释放由本模块生成的临时 ID 列表
+ */
+#define Rel_list_free(l) List_free(&(l))
+
+#endif // HIS_REL_CTRL_H

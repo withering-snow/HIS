@@ -2,7 +2,8 @@
 #define HIS_SERVICE_MANAGER_H
 
 #include <HIS_entity.h>
-#include <HIS_ctrl.h>
+#include <HIS_db.h>
+#include <HIS_io.h>
 
 /**
  * @brief 业务逻辑层 (Service Layer)
