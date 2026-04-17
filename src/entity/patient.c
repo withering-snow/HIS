@@ -45,12 +45,13 @@ Patient_T Patient_load(
     Patient_T p=safe_malloc(sizeof(struct Patient_T));
     ASSERT(p !=NULL,"不合法");
     LOAD_ID(id);
+    p->id=id;
     p->gender=gender;
     p->birth_ts=birth_ts;
     strncpy(p->name,name,32);
     strncpy(p->phone,phone,20);
     strncpy(p->id_card,id_card,20);
-
+    return p;
 }
 
 void Patient_free(Patient_T *p){
@@ -104,12 +105,13 @@ char * Patient_id_card(Patient_T p){
 // 重装载： 在校验数据合法性后，将所有数据进行覆盖
 Status Patient_update(Patient_T p, const Patient_Update_Pack *pack){
     ASSERT(p !=NULL,"不合法");
-    ASSERT(pack !=NULL,"不合法")；
+    ASSERT(pack !=NULL,"不合法");
     p->gender=pack->gender;
     p->birth_ts=pack->birth_ts;
     strncpy(p->name,pack->name,32);
     strncpy(p->phone,pack->phone,20);
     strncpy(p->id_card,pack->id_card,20);
+    return HIS_OK;
 }
 
 
