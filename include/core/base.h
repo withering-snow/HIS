@@ -148,12 +148,13 @@ typedef int (*compare)(const void *a, const void *b);
 
 
 // 以下为对于实体的通用内部id工具
+#define INVALID_ID (-1LL)
 /**
  * @brief id生成器，基于当前静态变量 id_counter
  * 若已经达到上限，会返回-1
  */
 #define NEW_ID() \
-    ((_id_counter < LLONG_MAX)? (_id_counter++): -1)
+    ((_id_counter < LLONG_MAX)? (_id_counter++): INVALID_ID)
 
 /**
  * @brief 加载实体时，需要使用此函数用于记录当前最大id
