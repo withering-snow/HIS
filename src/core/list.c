@@ -158,3 +158,34 @@ void List_sort(List_T l, compare cmp) {
     curr->next = l->dummy;
     l->dummy->prev = curr;
 }
+
+
+
+/*
+ * 为了便于挂号的队列实现，于此增加两个辅助函数
+ */
+int List_pop_front(List_T l, void *out_data) {
+    ASSERT(l, "链表不能为空");
+    if (l->size == 0)
+        return 1;
+    PNode target = l->dummy->next;
+
+    if (out_data) {
+        memcpy(out_data, target->data, l->element_size);
+    }
+
+    target->prev->next = target->next;
+    target->next->prev = target->prev;
+
+    if (l->cursor == target) l->cursor = l->dummy;
+
+    free(target);
+    l->size--;
+    return 0;
+}
+
+void List_insert_before_cursor(List_T l, const void *data) {
+    ASSERT(l && l->cursor, "链表或迭代器非法");
+    __create_node(l->element_size, data, l->cursor->prev, l->cursor);
+    l->size++;
+}

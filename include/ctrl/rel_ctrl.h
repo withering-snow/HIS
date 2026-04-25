@@ -2,6 +2,7 @@
 #define HIS_REL_CTRL_H
 
 #include <HIS_core.h>
+#include <data_ctrl.h>
 
 
 typedef struct Rel_doc {
@@ -9,15 +10,26 @@ typedef struct Rel_doc {
     long long doc_id;
 }Rel_doc;
 
+
 typedef struct Rel_ward {
     long long pat_id;
     long long ward_id;
 }Rel_ward;
 
 
+typedef struct {
+    long long doc_id;
+    List_T queue;
+}Rel_queue;
+typedef struct{
+    long long pat_id;
+    long long priority_score;
+}Rel_queue_node;
+
+
 /*
  * Rel_Ctrl
- * 管理“病人-医生”逻辑绑定与“病人-病房”的高位路由索引。
+ * 管理“病人-医生”逻辑绑定,“病人-病房”的高位路由索引
  * 不持有物理状态。
  * 床位与时间戳等物理数据请通过本模块返回的 ID 进一步访问 Ward 模块获取。
  */
@@ -107,6 +119,40 @@ bool Rel_is_patient_admitted(long long patient_id);
  */
 bool Rel_has_doctor(long long patient_id);
 
+
+// =============================================================================
+// 实时叫号队列
+/*
+ * 职责：管理医生今日的活跃接诊队列。
+ * 逻辑：基于“准时”假设，队列内部按 time_slot 物理排序。
+ */
+
+/**
+ * @brief  将挂号/签到病人推入医生的今日队列
+ * @param  sequence_no  时段序号 (用于内部排序)
+ */
+Status Rel_queue_push(long long doc_id, long long pat_id, int sequence_no, int time_frame);
+
+/**
+ * @brief  退号/取消挂号：从队列中移除特定病人
+ */
+Status Rel_queue_remove(long long doc_id, long long pat_id);
+
+/**
+ * @brief  医生叫号：弹出当前最该就诊的病人
+ */
+long long Rel_queue_pop(long long doc_id);
+
+/**
+ * @brief  获取某医生当前的排队副本
+ * @return 包含 patient_id 的新链表。调用者负责 List_free
+ */
+List_T Rel_queue_get_all(long long doc_id);
+
+/**
+ * @brief  系统启动/每日零点同步：解析 Record 链表，重建所有医生的 Rel_Queue
+ */
+void Rel_queue_update();
 
 // =============================================================================
 // 对返回的链表提供释放工具
