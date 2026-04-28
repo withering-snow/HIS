@@ -28,6 +28,7 @@ Medicine_T Medicine_new(
 {
     Medicine_T m=safe_malloc(sizeof(Medicine_T));
     ASSERT(m !=NULL,"不合法");
+    m->id=NEW_ID();
     m->cur_price=cur_price;
     strncpy(m->name,name,32);
     return m;
@@ -162,6 +163,7 @@ Status Medicine_batch_add(
     bat.buy_price=buy_price;
     bat.expire_ts=expire_ts;
     strncpy(bat.batch_no,batch_no,32);
+    bat.remain=remain;
     return HIS_OK;
 }
 

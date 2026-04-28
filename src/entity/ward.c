@@ -1,7 +1,7 @@
 #include <ward.h>
 
 static long long _id_counter = 0;
-static long long _id_counter2 = 0;
+static long long empty_bed = 0;
 
 struct Ward_T {
     long long   id;
@@ -19,8 +19,7 @@ Ward_T Ward_load(
     w->id = id;
     w->dept=dept;
     w->daily_cost=daily_cost;
-    w->bed_count=_id_counter;
-    w->empty_count=_id_counter2;
+    w->empty_count=empty_bed;
     return w;
 }
 
@@ -31,13 +30,14 @@ Ward_T Ward_new(
     Ward_T w=safe_malloc(sizeof(struct Ward_T));
     Bed_T bed;
     w->dept=dept;
+    w->id=NEW_ID();
     w->daily_cost=daily_cost;
     w->bed_count=bed_count;
     bed.bed_label=start_bed_label;
     for(int i=0;i<bed_count;i++)
     {
         if(bed.status==1) w->empty_count++;
-        else w->bed_count+=0;
+        else w->empty_count+=0;
     }
     return w;
 }
