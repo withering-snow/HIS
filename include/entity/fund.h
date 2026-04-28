@@ -18,7 +18,7 @@ long long Fund_balance(T f);
 // 充值与扣费
 
 // 充值
-Status Fund_deposit(T f, long long amount, long long admin_id);
+Status Fund_deposit(T f, long long amount);
 
 // 扣费（预检）
 Status Fund_can_afford(T f, long long amount);

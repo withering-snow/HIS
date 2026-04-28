@@ -16,8 +16,8 @@ struct Record_T {
         DataAdmission       admit;
         DataDischarge       disc;
         DataChangeBed       c_bed;
-        DataChangeDoc       c_doc;
-        DataStackIn         s_in;
+        DataChangeDoc       c_doc;//前面的actor_id为pat_id
+        DataStackIn         s_in;//后两个actor_id为doc_id
         DataStackOut        s_out;
     }               detail;
 };
@@ -51,46 +51,105 @@ Record_T Rec_load(
 Record_T Rec_reg_new(
     long long cost, long long pat_id,
     long long doc_id, int sequence_no, int target_date, int time_frame, RegistrationStatus status){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    r->time_stamp = time_frame;
+    DataRegistration tmp;
+    tmp.doc_id = doc_id;
+    tmp.sequence_no = sequence_no;
+    tmp.target_date = target_date;
+    tmp.status = status;
+    return r;
 }
 Record_T Rec_cons_new(
     long long cost, long long pat_id,
     long long doc_id, const char* diagnosis, const char* advice){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    DataConsultation tmp;
+    tmp.doc_id = doc_id;
+    strncpy(tmp.diagnosis,diagnosis,128);
+    strncpy(tmp.advice,advice,128);
+    return r;
 }
 Record_T Rec_exam_new(
     long long cost, long long pat_id,
     long long doc_id, const char* exam_name){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    DataExamination tmp;
+    tmp.doc_id = doc_id;
+    strncpy(tmp.exam_name,exam_name,128);
+    return r;
 }
 Record_T Rec_pres_new(
     long long cost, long long pat_id,
     long long doc_id, long long med_id, int amount){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    DataPrescription tmp;
+    tmp.doc_id = doc_id;
+    tmp.med_id = med_id;
+    tmp.amount = amount;
+    return r;
 }
 Record_T Rec_admit_new(
     long long cost, long long pat_id,
     long long ward_id, long long bed_id, long long deposit){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    DataAdmission tmp;
+    tmp.ward_id = ward_id;
+    tmp.bed_id = bed_id;
+    tmp.deposit = deposit;
+    return r;
 }
 Record_T Rec_disc_new(
     long long cost, long long pat_id,
     long long total_bill, long long paid){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    DataDischarge tmp;
+    tmp.total_bill = total_bill;
+    tmp.paid = paid;
+    return r;
 }
 Record_T Rec_c_bed_new(
     long long cost, long long pat_id,
     long long from_ward_id, long long to_ward_id,
     long long from_bed_id, long long to_bed_id){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    DataChangeBed tmp;
+    tmp.from_ward_id = from_ward_id;
+    tmp.to_ward_id = to_ward_id;
+    tmp.from_bed_id = from_bed_id;
+    tmp.to_bed_id = to_bed_id;
+    return r;
 }
 Record_T Rec_c_doc_new(
     long long cost, long long pat_id,
     long long old_doc_id, long long new_doc_id){
-
+    Record_T r = safe_malloc(sizeof(struct Record_T));
+    r->cost = cost;
+    r->actor_id = pat_id;
+    DataChangeDoc tmp;
+    tmp.old_doc_id = old_doc_id;
+    tmp.new_doc_id = new_doc_id;
+    return r;
 }
 void Rec_free(Record_T* r){
-
+    ASSERT((r !=NULL),"不合法");
+    free(r);
+    free(*r);
+    *r = NULL;
 }
 
 
@@ -98,23 +157,28 @@ void Rec_free(Record_T* r){
 
 // 获取公共属性
 RecordType Rec_type(Record_T r){
-
+    ASSERT((r !=NULL),"不合法");
+    return r->type;
 }
 
 bool Rec_is_invalid(Record_T r){
-
+    ASSERT((r !=NULL),"不合法");
+    return r->is_invalid;
 }
 
 long long Rec_actor_id(Record_T r){
-
+    ASSERT((r !=NULL),"不合法");
+    return r->actor_id;
 }
 
 long long Rec_time_stamp(Record_T r){
-
+    ASSERT((r !=NULL),"不合法");
+    return r->time_stamp;
 }
 
 long long Rec_cost(Record_T r){
-
+    ASSERT((r !=NULL),"不合法");
+    return r->cost;
 }
 
 
@@ -122,7 +186,8 @@ long long Rec_cost(Record_T r){
 
 // 返回详情区域的指针，外部根据 Rec_type(r) 强转为 DataRegistration* 等
 void * Rec_detail(Record_T r){
-
+    ASSERT((r !=NULL),"不合法");
+    return &(r->detail);
 }
 
 
@@ -130,11 +195,12 @@ void * Rec_detail(Record_T r){
 
 // 逻辑作废该条记录
 void Rec_set_invalid(Record_T r){
-
+    ASSERT((r !=NULL),"不合法");
+    r->is_invalid = true;
 }
 
 
-
+//TODO：以下作废
 
 // 将记录转换为字符串描述（比如显示 "患者A 挂号 医生B 费用10元"）
 void Rec_to_string(Record_T r, char *buf, size_t len){

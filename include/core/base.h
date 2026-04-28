@@ -37,8 +37,8 @@ typedef enum {
     HIS_ERR_PATIENT_NOT_IN_WARD = -32,
 
     // Medicine (药品) 业务相关
-    HIS_ERR_OUT_OF_STOCK = -40,
-    HIS_ERR_INVALID_DOSAGE = -41,
+    HIS_ERR_OUT_OF_STOCK = -40,//无库存
+    HIS_ERR_INVALID_DOSAGE = -41,//非法配量
 
     // Fund (财务) 业务相关
     HIS_ERR_INSUFFICIENT_FUNDS = -50,
@@ -46,7 +46,10 @@ typedef enum {
 
     // 系统级/IO 错误
     HIS_ERR_IO_FAILURE = -60,
-    HIS_ERR_FILE_CORRUPT = -61
+    HIS_ERR_FILE_CORRUPT = -61,
+
+    //Account（账号）错误
+    HIS_ERR_PASSWORD_MISMATCH = -72
 } Status;
 // ---------------- 状态码 ---------------- //
 

@@ -23,7 +23,7 @@ Doctor_T Doctor_load(
     long long id,
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
     const char* name, const char* phone, const char* id_card){
-    Doctor_T d=malloc(sizeof(struct Doctor_T));
+    Doctor_T d=safe_malloc(sizeof(struct Doctor_T));
     ASSERT(d !=NULL,"不合法");
     LOAD_ID(id);
     d->id=id;
@@ -40,7 +40,7 @@ Doctor_T Doctor_load(
 Doctor_T Doctor_new(
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
     const char* name, const char* phone, const char* id_card){
-    Doctor_T d=malloc(sizeof(struct Doctor_T));
+    Doctor_T d=safe_malloc(sizeof(struct Doctor_T));
     ASSERT(d !=NULL,"不合法");
     d->id=NEW_ID();
     d->gender=gender;
@@ -134,65 +134,62 @@ Status Doctor_update(Doctor_T d, const Doctor_Update_Pack *pack){
 
 
 int Doctor_cmp_id(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return (p->id>q->id)-(p->id-q->id);
 }
 
 int Doctor_cmp_gender(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return (p->gender>q->gender)-(p->gender<q->gender);
 }
 
 int Doctor_cmp_age(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return (p->birth_ts>q->birth_ts)-(p->birth_ts<q->birth_ts);
 }
 
 int Doctor_cmp_is_active(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return (p->is_active>q->is_active)-(p->is_active<q->is_active);
 }
 
 int Doctor_cmp_dept(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return (p->dept>q->dept)-(p->dept<q->dept);
 }
 
 int Doctor_cmp_title(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return (p->title>q->title)-(p->title<q->title);
 }
 
 int Doctor_cmp_name(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return strncmp(p->name,q->name,32);
 }
 
 int Doctor_cmp_phone(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return strncmp(p->phone,q->phone,20);
 }
 
 int Doctor_cmp_id_card(const void *a, const void *b){
-    const struct Doctor_T *p=a;
-    const struct Doctor_T *q=b;
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
     return strncmp(p->id_card,q->id_card,20);
 }
 
-
-
-
 int Doctor_cmp_fuzzy(const void *a, const void *b){
-    const struct Doctor_T *p=(struct Patient_T *)a;
+    Doctor_T p=*(Doctor_T *)a;
     if (strstr(p->name,b)!=NULL)
-        return 0;
+        return HIS_OK;
     else  return HIS_ERR_NOT_FOUND;
 }

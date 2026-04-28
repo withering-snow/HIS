@@ -55,8 +55,9 @@ Patient_T Patient_load(
 }
 
 void Patient_free(Patient_T *p){
-    ASSERT((p!=NULL&&*p!=NULL),"不合法");
+    ASSERT((p !=NULL),"不合法");
     free(p);
+    free(*p);
     *p=NULL;
 }
 
@@ -119,38 +120,38 @@ Status Patient_update(Patient_T p, const Patient_Update_Pack *pack){
 
 // 比较器详细定义见 base.h
 int Patient_cmp_id(const void *a, const void *b){
-    const struct Patient_T *p=(struct Patient_T *)a;
-    const struct Patient_T *q=(struct Patient_T *)b;
+    Patient_T p=*(Patient_T *)a;
+    Patient_T q=*(Patient_T *)b;
     return (p->id > q->id) - (p->id < q->id);
 }
 
 int Patient_cmp_gender(const void *a, const void *b){
-    const struct Patient_T *p=(struct Patient_T *)a;
-    const struct Patient_T *q=(struct Patient_T *)b;
+    Patient_T p=*(Patient_T *)a;
+    Patient_T q=*(Patient_T *)b;
     return (p->gender > q->gender) - (p->gender < q->gender);
 }
 
 int Patient_cmp_age(const void *a, const void *b){
-    const struct Patient_T *p=(struct Patient_T *)a;
-    const struct Patient_T *q=(struct Patient_T *)b;
+    Patient_T p=*(Patient_T *)a;
+    Patient_T q=*(Patient_T *)b;
     return (p->birth_ts > q->birth_ts) - (p->birth_ts < q->birth_ts);
 }
 
 int Patient_cmp_name(const void *a, const void *b){
-    const struct Patient_T *p=(struct Patient_T *)a;
-    const struct Patient_T *q=(struct Patient_T *)b;
+    Patient_T p=*(Patient_T *)a;
+    Patient_T q=*(Patient_T *)b;
     return strncmp(p->name,q->name,32);
 }
 
 int Patient_cmp_phone(const void *a, const void *b){
-    const struct Patient_T *p=(struct Patient_T *)a;
-    const struct Patient_T *q=(struct Patient_T *)b;
+     Patient_T p=*(Patient_T *)a;
+     Patient_T q=*(Patient_T *)b;
     return strncmp(p->phone,q->phone,20);
 }
 
 int Patient_cmp_id_card(const void *a, const void *b){
-    const struct Patient_T *p=(struct Patient_T *)a;
-    const struct Patient_T *q=(struct Patient_T *)b;
+     Patient_T p=*(Patient_T *)a;
+     Patient_T q=*(Patient_T *)b;
     return strncmp(p->id_card,q->id_card,20);
 }
 
@@ -159,8 +160,8 @@ int Patient_cmp_id_card(const void *a, const void *b){
 
 // 模糊姓名搜索器
 int Patient_cmp_fuzzy(const void *a, const void *b){
-    const struct Patient_T *p=(struct Patient_T *)a;
+    Patient_T p=*(Patient_T *)a;
     if (strstr(p->name,b)!=NULL)
-        return 0;
+        return HIS_OK;
     else  return HIS_ERR_NOT_FOUND;
 }
