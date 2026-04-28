@@ -264,7 +264,7 @@ Status Io_save_account()
     {
         return HIS_ERR_IO_FAILURE;
     }
-    fprintf(fp,"Class|actor_id|name|password\n");
+    fprintf(fp,"Class|Actor_id|Name|Password\n");
     List_T List_account = Data_get_account();
     void* acc_ptr = List_first(List_account);
     while (acc_ptr != NULL)
@@ -399,7 +399,24 @@ Status Io_load_ward()
 };
 Status Io_save_record()
 {
-
+    char dir[32];
+    snprintf(dir,32, "data%cRecord.txt", SEP);
+    FILE *fp=fopen(dir,"w");
+    if (fp == NULL)
+    {
+        return HIS_ERR_IO_FAILURE;
+    }
+    fprintf(fp,"Class|actor_id|name|password\n");
+    List_T List_account = Data_get_account();
+    void* acc_ptr = List_first(List_account);
+    while (acc_ptr != NULL)
+    {
+        Account_T acc = *(Account_T *)acc_ptr;
+        fprintf(fp,"%d|%lld|%s|%s\n",Account_class(acc),Account_id(acc),Account_name(acc),Account_password(acc));
+        acc_ptr = List_next(List_account);
+    }
+    fclose(fp);
+    return HIS_OK;
 };
 Status Io_load_record()
 {
