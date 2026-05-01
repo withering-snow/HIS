@@ -342,7 +342,7 @@ Status Io_save_ward()
             bed_ptr = List_next(List_bed);
         }
 
-        bed_ptr = List_next(List_bed);
+        ward_ptr = List_next(List_ward);
     }
 
     fclose(fp);
@@ -374,7 +374,7 @@ Status Io_load_ward()
         {
             return HIS_ERR_IO_FAILURE;
         }
-        Ward_T ward = Ward_load(id,dept,daily_cost,bed_count,empty_count);
+        Ward_T ward = Ward_load(id,dept,daily_cost);
         List_push_back(List_ward, &ward);
         List_T List_bed = __tmp_list(); //TODO:ward
         void* bed_ptr = List_first(List_bed);
@@ -406,21 +406,117 @@ Status Io_save_record()
     {
         return HIS_ERR_IO_FAILURE;
     }
-    fprintf(fp,"Class|actor_id|name|password\n");
-    List_T List_account = Data_get_account();
-    void* acc_ptr = List_first(List_account);
-    while (acc_ptr != NULL)
+    fprintf(fp,"Type|Is_Invalid|Actor_Id|Time_Stamp|Cost|Detail...\n");
+    List_T List_record = Data_get_record();
+    void* rec_ptr = List_first(List_record);
+    while (rec_ptr != NULL)
     {
-        Account_T acc = *(Account_T *)acc_ptr;
-        fprintf(fp,"%d|%lld|%s|%s\n",Account_class(acc),Account_id(acc),Account_name(acc),Account_password(acc));
-        acc_ptr = List_next(List_account);
+        Record_T rec = *(Record_T *)rec_ptr;
+        fprintf(fp,"%d|%d|%lld|%lld|%lld",Rec_type(rec),Rec_is_invalid(rec),Rec_actor_id(rec),Rec_time_stamp(rec),Rec_cost(rec));
+        switch (Rec_type(rec))
+        {
+        case REC_REGISTRATION:
+            {
+                DataRegistration* data = (DataRegistration*)Rec_detail(rec);
+                fprintf(fp,"%lld|%d|%d|%d",data->doc_id,data->sequence_no,data->target_date,data->time_frame);
+                break;
+            }
+
+        case REC_CONSULTATION:
+            {
+                DataConsultation* data = (DataConsultation*)Rec_detail(rec);
+                fprintf(fp,"%lld|%s|%s",data->doc_id,data->diagnosis,data->advice);
+                break;
+            };
+        case REC_EXAMINATION:
+            {
+                DataRegistration* data = (DataRegistration*)Rec_detail(rec);
+                fprintf(fp,"%lld|%s",data->doc_id,data->exam_name);
+                break;
+            };
+        case REC_PRESCRIPTION:
+            {
+                DataPrescription* data = (DataPrescription*)Rec_detail(rec);
+                fprintf(fp,"%lld|%LLd|%d",data->doc_id,data->med_id,data->amount);
+                break;
+            };
+        case REC_ADMISSION:
+            {
+                DataAdmission* data = (DataAdmission*)Rec_detail(rec);
+                fprintf(fp,"%lld|%lld|%lld",data->ward_id,data->bed_id,data->deposit);
+                break;
+            };
+        case REC_DISCHARGE:
+            {
+                DataDischarge* data = (DataDischarge*)Rec_detail(rec);
+                fprintf(fp,"%lld|%lld",data->total_bill,data->paid);
+                break;
+            };
+        case REC_CHANGE_BED:
+            {
+                DataChangeBed* data = (DataChangeBed*)Rec_detail(rec);
+                fprintf(fp,"%lld|%lld|%lld|%lld",data->from_ward_id,data->to_ward_id,data->from_bed_id,data->to_bed_id);
+                break;
+            };
+        case REC_CHANGE_DOC:
+            {
+                DataChangeDoc* data = (DataChangeDoc*)Rec_detail(rec);
+                fprintf(fp,"%lld|%lld",data->old_doc_id,data->new_doc_id);//改成past和present更合适
+                break;
+            };
+        case REC_STOCK_IN:
+            {
+                DataStackIn* data = (DataStackIn*)Rec_detail(rec);
+                fprintf(fp,"%lld|%lld|%lld|%lld|%d|%s",data->med_id,data->batch_id,data->buy_price,data->expire_ts,data->total,data->batch_no);
+                break;
+            };
+        case REC_STOCK_OUT:
+            {
+                DataStackOut* data = (DataStackOut*)Rec_detail(rec);
+                fprintf(fp,"%lld|%lld|%d|%s",data->med_id,data->batch_id,data->total,data->batch_no);
+                break;
+            };
+
+        rec_ptr = List_next(List_record);
     }
     fclose(fp);
     return HIS_OK;
-};
+}
+
 Status Io_load_record()
 {
+    char dir[32];
+    snprintf(dir, sizeof(dir), "data%cRecord.txt", SEP);
+
+    FILE *fp = fopen(dir, "r");
+    if (fp == NULL){
+        return HIS_ERR_IO_FAILURE;
+    };
+    char dummy[256];
+    fgets(dummy,sizeof(dummy),fp);
+    List_T List_record = Data_get_record();
+    void* record_ptr = List_first(List_record);
+    while (feof(fp)!= 0)
+    {
+
+        RecordType      type;
+        bool            is_invalid;
+        long long       actor_id;
+        long long       time_stamp;
+        long long       cost;
+        if (fscanf(fp,"%d|%d|%lld|%lld|%lld\n",type,is_invalid,
+        actor_id,time_stamp,cost)!=5)
+        {
+            return HIS_ERR_IO_FAILURE;
+        }
 
 
-
-};
+    switch (type)
+    {
+    case REC_REGISTRATION:
+        DataRegistration data;
+        fscanf(fp,"%lld|%lld|%lld|%d|%d", data.doc_id, data->...);
+        Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                &data, sizeof(data));
+        break;
+    }
