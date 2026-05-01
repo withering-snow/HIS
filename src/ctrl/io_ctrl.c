@@ -484,39 +484,118 @@ Status Io_save_record()
 }
 
 Status Io_load_record()
-{
-    char dir[32];
-    snprintf(dir, sizeof(dir), "data%cRecord.txt", SEP);
-
-    FILE *fp = fopen(dir, "r");
-    if (fp == NULL){
-        return HIS_ERR_IO_FAILURE;
-    };
-    char dummy[256];
-    fgets(dummy,sizeof(dummy),fp);
-    List_T List_record = Data_get_record();
-    void* record_ptr = List_first(List_record);
-    while (feof(fp)!= 0)
     {
+        char dir[32];
+        snprintf(dir, sizeof(dir), "data%cRecord.txt", SEP);
 
-        RecordType      type;
-        bool            is_invalid;
-        long long       actor_id;
-        long long       time_stamp;
-        long long       cost;
-        if (fscanf(fp,"%d|%d|%lld|%lld|%lld\n",type,is_invalid,
-        actor_id,time_stamp,cost)!=5)
-        {
+        FILE *fp = fopen(dir, "r");
+        if (fp == NULL){
             return HIS_ERR_IO_FAILURE;
+        };
+        char dummy[256];
+        fgets(dummy,sizeof(dummy),fp);
+        List_T List_record = Data_get_record();
+        void* record_ptr = List_first(List_record);
+        while (feof(fp)!= 0)
+        {
+
+            RecordType      type;
+            bool            is_invalid;
+            long long       actor_id;
+            long long       time_stamp;
+            long long       cost;
+            if (fscanf(fp,"%d|%d|%lld|%lld|%lld\n",type,is_invalid,
+            actor_id,time_stamp,cost)!=5)
+            {
+                return HIS_ERR_IO_FAILURE;
+            }
+
+
+            switch (type)
+            {
+            case REC_REGISTRATION:
+                {
+                    DataRegistration data;
+                    fscanf(fp,"%lld|%lld|%lld|%d|%d", data.doc_id, data.sequence_no,data.target_date,data.time_frame);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_CONSULTATION:
+                {
+                    DataConsultation data;
+                    fscanf(fp,"%lld|%s|%s", data.doc_id, data.diagnosis,data.advice);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_EXAMINATION:
+                {
+                    DataExamination data;
+                    fscanf(fp,"%lld|%s", data.doc_id, data.exam_name);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_PRESCRIPTION:
+                {
+                    DataPrescription data;
+                    fscanf(fp,"%lld|%lld|%d", data.doc_id, data.med_id,data.amount);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_ADMISSION:
+                {
+                    DataAdmission data;
+                    fscanf(fp,"%lld|%lld|%lld", data.ward_id, data.bed_id,data.deposit);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_DISCHARGE:
+                {
+                    DataDischarge data;
+                    fscanf(fp,"%lld|%lld", data.total_bill, data.paid);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_CHANGE_BED:
+                {
+                    DataChangeBed data;
+                    fscanf(fp,"%lld|%lld|%lld|%lld",  data.from_ward_id,data.to_ward_id,data.from_bed_id,data.to_bed_id);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_CHANGE_DOC:
+                {
+                    DataChangeDoc data;
+                    fscanf(fp,"%lld|%lld", data.old_doc_id, data.new_doc_id);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_STOCK_IN:
+                {
+                    DataStackIn data;
+                    fscanf(fp,"%lld|%lld|%lld|%lld|%d|%s", data.med_id, data.batch_id,data.buy_price,data.expire_ts,data.total,data.batch_no);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            case REC_STOCK_OUT:
+                {
+                    DataStackOut data;
+                    fscanf(fp,"%lld|%lld|%d|%s", data.med_id, data.batch_id,data.total,data.batch_no);
+                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                            &data, sizeof(data));
+                    break;
+                }
+            }
+            record_ptr = List_next(List_record);
         }
-
-
-    switch (type)
-    {
-    case REC_REGISTRATION:
-        DataRegistration data;
-        fscanf(fp,"%lld|%lld|%lld|%d|%d", data.doc_id, data->...);
-        Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                &data, sizeof(data));
-        break;
+        fclose(fp);
+        return HIS_OK;
     }
