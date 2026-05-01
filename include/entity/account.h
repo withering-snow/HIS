@@ -8,6 +8,7 @@ typedef struct T *T;
 
 // 账号类型枚举
 typedef enum{
+    CLASS_NO_USER,
     CLASS_PATIENT,
     CLASS_DOCTOR,
     CLASS_ROOT

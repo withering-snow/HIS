@@ -29,52 +29,59 @@ void Data_init() {
 
 
 void Data_destroy() {
-    Account_T acc = (Account_T)List_first(Account_list);
-    while (acc != NULL) {
+    void* acc_ptr = List_first(Account_list);
+    while (acc_ptr != NULL) {
+        Account_T acc = *(Account_T *)acc_ptr;
         Account_free(&acc);
-        acc = (Account_T)List_next(Account_list);
+        acc_ptr = List_next(Account_list);
     }
-    List_free(&Account_list);
+    List_free(& Account_list);
 
-    Doctor_T doc = (Doctor_T)List_first(Doctor_list);
-    while (doc != NULL){
+    void* doc_ptr = List_first(Doctor_list);
+    while (doc_ptr != NULL){
+        Doctor_T doc = *(Doctor_T *)doc_ptr;
         Doctor_free(&doc);
-        doc = (Doctor_T)List_next(Doctor_list);
+        doc_ptr = List_next(Doctor_list);
     }
     List_free(& Doctor_list);
 
-    Fund_T fun = (Fund_T)List_first(Fund_list);
-    while (fun != NULL){
+    void* fun_ptr = List_first(Fund_list);
+    while (fun_ptr != NULL){
+        Fund_T fun = *(Fund_T *)fun_ptr;
         Fund_free(&fun);
-        fun = (Fund_T)List_next(Fund_list);
+        fun_ptr = List_next(Fund_list);
     }
     List_free(& Fund_list);
 
-    Medicine_T med = (Medicine_T)List_first(Medicine_list);
-    while (med != NULL){
+    void* med_ptr = List_first(Medicine_list);
+    while (med_ptr != NULL){
+        Medicine_T med = *(Medicine_T *)med_ptr;
         Medicine_free(&med);
-        med = (Medicine_T)List_next(Medicine_list);
+        med_ptr = List_next(Medicine_list);
     }
     List_free(& Medicine_list);
 
-    Patient_T pat = (Patient_T)List_first(Patient_list);
-    while (pat != NULL){
+    void* pat_ptr = List_first(Patient_list);
+    while (pat_ptr != NULL){
+        Patient_T pat = *(Patient_T *)pat_ptr;
         Patient_free(&pat);
-        pat = (Patient_T)List_next(Patient_list);
+        pat_ptr = List_next(Patient_list);
     }
     List_free(& Patient_list);
 
-    Record_T rec = (Record_T)List_first(Record_list);
-    while (rec != NULL){
+    void* rec_ptr = List_first(Record_list);
+    while (rec_ptr != NULL){
+        Record_T rec = *(Record_T *)rec_ptr;
         Rec_free(&rec);
-        rec = (Record_T)List_next(Record_list);
+        rec_ptr = List_next(Record_list);
     }
     List_free(& Record_list);
 
-    Ward_T war = (Ward_T)List_first(Ward_list);
-    while (war != NULL){
+    void* war_ptr = List_first(Ward_list);
+    while (war_ptr != NULL){
+        Ward_T war = *(Ward_T *)war_ptr;
         Ward_free(&war);
-        war = (Ward_T)List_next(Ward_list);
+        war_ptr = List_next(Ward_list);
     }
     List_free(& Ward_list);
 }

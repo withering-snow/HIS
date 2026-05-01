@@ -20,33 +20,37 @@
 // ---------------- 状态码 ---------------- //
 typedef enum {
     // 基础状态
-    HIS_OK = 0,
-    HIS_ERR_NO_MEM = -1,
-    HIS_ERR_INVALID_ARG = -2,
+    HIS_OK = 0,                     // 正常运行
+    HIS_ERR_NO_MEM = -1,            // 内存耗尽
+    HIS_ERR_INVALID_ARG = -2,       // 传入参数非法
 
     // 通用搜索错误
-    HIS_ERR_NOT_FOUND = -10,
-    HIS_ERR_ALREADY_EXISTS = -11,
+    HIS_ERR_NOT_FOUND = -10,        // 成员不存在
+    HIS_ERR_ALREADY_EXISTS = -11,   // 成员已存在（防止反复创建）
 
     // Patient/Doctor 业务相关
-    HIS_ERR_INVALID_ID = -20,
+    HIS_ERR_INVALID_ID = -20,       // ID 非法
 
     // Ward (病房) 业务相关
-    HIS_ERR_WARD_FULL = -30,
-    HIS_ERR_BED_OCCUPIED = -31,
-    HIS_ERR_PATIENT_NOT_IN_WARD = -32,
+    HIS_ERR_WARD_FULL = -30,            // 病房已满
+    HIS_ERR_BED_OCCUPIED = -31,         // 病床被占用
+    HIS_ERR_PATIENT_NOT_IN_WARD = -32,  // 病人不在此病房
 
     // Medicine (药品) 业务相关
-    HIS_ERR_OUT_OF_STOCK = -40,//无库存
-    HIS_ERR_INVALID_DOSAGE = -41,//非法配量
+    HIS_ERR_OUT_OF_STOCK = -40,     // 药品无库存
+    HIS_ERR_INVALID_DOSAGE = -41,   // 剂量非法
 
     // Fund (财务) 业务相关
-    HIS_ERR_INSUFFICIENT_FUNDS = -50,
-    HIS_ERR_PAYMENT_REQUIRED = -51,
+    HIS_ERR_INSUFFICIENT_FUNDS = -50,   // 余额不足
+    HIS_ERR_PAYMENT_REQUIRED = -51,     // 未付款
 
     // 系统级/IO 错误
-    HIS_ERR_IO_FAILURE = -60,
-    HIS_ERR_FILE_CORRUPT = -61,
+    HIS_ERR_IO_FAILURE = -60,               // io时发生错误
+    HIS_ERR_FILE_CORRUPT = -61,             // 文件损坏或格式不正确
+
+    // 服务层级错误
+    HIS_ERR_INSUFFICIENT_PERMISSION = -70,  // 当前账户权限不足
+    HIS_ERR_NO_USER = -71,
 
     //Account（账号）错误
     HIS_ERR_PASSWORD_MISMATCH = -72
