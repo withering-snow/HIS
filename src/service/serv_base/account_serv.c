@@ -16,9 +16,15 @@ _cur_account_info = {
 };
 
 
+Status Serv_account_signup(
+    AccountClass class, long long actor_id,
+    const char *name, const char *password){
+    switch(class)
+}
 
 
-Status Serv_account_login(AccountClass class, long long actor_id, const char *password){
+
+Status Serv_account_signin(AccountClass class, long long actor_id, const char *password){
     List_T list = Data_get_account();
     Account_T tmp = Account_load(class, actor_id, "tmp", "tmp");
     Status status = HIS_ERR_NOT_FOUND;
@@ -46,7 +52,7 @@ Status Serv_account_login(AccountClass class, long long actor_id, const char *pa
     return status;
 }
 
-Status Serv_account_logout(){
+Status Serv_account_signout(){
     if(_cur_account_info.class == CLASS_NO_USER){
         return HIS_ERR_NO_USER;
     }

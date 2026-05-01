@@ -11,6 +11,7 @@ include_directories(
     include/entity
     include/ctrl
     include/service
+        include/service/serv_base
     include/ui
     include/api
 )

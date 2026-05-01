@@ -5,24 +5,29 @@
 #include <HIS_core.h>
 #include <HIS_entity.h>
 #include <HIS_db.h>
+#include <HIS_serv_base.h>
 
+
+Status Serv_account_signup(
+    AccountClass class, long long actor_id,
+    const char* name, const char* password)
+;
 
 /**
  * @brief                   登录
  * @param class             账号权限
  * @param actor_id          账号关联主体id
- * @param name              账号用户名
  * @param password          密码
  * @return                  状态码
  */
-Status Serv_account_login(
+Status Serv_account_signin(
     AccountClass class, long long actor_id, const char *password)
 ;
 /**
  * @brief   注销账户
  * @return  状态码
  */
-Status Serv_account_logout();
+Status Serv_account_signout();
 
 /**
  * @brief                   校验当前权限
