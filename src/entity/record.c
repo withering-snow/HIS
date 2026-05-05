@@ -36,7 +36,7 @@ Record_T Rec_load(
 
     // 分配内存
     Record_T r = safe_malloc(sizeof(struct Record_T));
-
+    memset(r, 0, sizeof(struct Record_T));
     // 填充公共头部
     r->type = type;
     r->is_invalid = is_invalid;
@@ -48,112 +48,79 @@ Record_T Rec_load(
     memcpy(&(r->detail), specific_data, data_size);
     return r;
 }
-Record_T Rec_reg_new(
-    long long cost, long long pat_id,
-    long long doc_id, int sequence_no, int target_date, int time_frame, RegistrationStatus status){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    r->time_stamp = time_frame;
-    DataRegistration tmp;
-    tmp.doc_id = doc_id;
-    tmp.sequence_no = sequence_no;
-    tmp.target_date = target_date;
-    tmp.status = status;
-    return r;
+Record_T Rec_reg_new(long long cost, long long pat_id, long long doc_id,
+                     int sequence_no, int target_date, int time_frame, RegistrationStatus status) {
+    DataRegistration data = {
+        .doc_id = doc_id,
+        .sequence_no = sequence_no,
+        .target_date = target_date,
+        .time_frame = time_frame,
+        .status = status
+    };
+    return Rec_load(REC_REGISTRATION, false, pat_id,
+        Time_now(), cost, &data, sizeof(data));
 }
-Record_T Rec_cons_new(
-    long long cost, long long pat_id,
-    long long doc_id, const char* diagnosis, const char* advice){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    DataConsultation tmp;
-    tmp.doc_id = doc_id;
-    strncpy(tmp.diagnosis,diagnosis,128);
-    strncpy(tmp.advice,advice,128);
-    return r;
+
+Record_T Rec_cons_new(long long cost, long long pat_id, long long doc_id,
+                      const char* diagnosis, const char* advice) {
+    DataConsultation data = {.doc_id = doc_id};
+    strncpy(data.diagnosis, diagnosis, 127);
+    strncpy(data.advice, advice, 127);
+    data.diagnosis[127] = 0;
+    data.advice[127] = 0;
+    return Rec_load(REC_CONSULTATION, false,
+        pat_id, Time_now(), cost, &data, sizeof(data));
 }
-Record_T Rec_exam_new(
-    long long cost, long long pat_id,
-    long long doc_id, const char* exam_name){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    DataExamination tmp;
-    tmp.doc_id = doc_id;
-    strncpy(tmp.exam_name,exam_name,128);
-    return r;
+
+Record_T Rec_exam_new(long long cost, long long pat_id, long long doc_id, const char* exam_name) {
+    DataExamination data = {.doc_id = doc_id};
+    strncpy(data.exam_name, exam_name, 127);
+    data.exam_name[127] = 0;
+    return Rec_load(REC_EXAMINATION, false,
+        pat_id, Time_now(), cost, &data, sizeof(data));
 }
-Record_T Rec_pres_new(
-    long long cost, long long pat_id,
-    long long doc_id, long long med_id, int amount){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    DataPrescription tmp;
-    tmp.doc_id = doc_id;
-    tmp.med_id = med_id;
-    tmp.amount = amount;
-    return r;
+
+Record_T Rec_pres_new(long long cost, long long pat_id, long long doc_id, long long med_id, int amount) {
+    DataPrescription data = {.doc_id = doc_id, .med_id = med_id, .amount = amount};
+    return Rec_load(REC_PRESCRIPTION, false,
+        pat_id, Time_now(), cost, &data, sizeof(data));
 }
-Record_T Rec_admit_new(
-    long long cost, long long pat_id,
-    long long ward_id, long long bed_id, long long deposit){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    DataAdmission tmp;
-    tmp.ward_id = ward_id;
-    tmp.bed_id = bed_id;
-    tmp.deposit = deposit;
-    return r;
+
+Record_T Rec_admit_new(long long cost, long long pat_id, long long ward_id,
+    long long bed_id, long long deposit) {
+    DataAdmission data = {.ward_id = ward_id, .bed_id = bed_id, .deposit = deposit};
+    return Rec_load(REC_ADMISSION, false,
+        pat_id, Time_now(), cost, &data, sizeof(data));
 }
-Record_T Rec_disc_new(
-    long long cost, long long pat_id,
-    long long total_bill, long long paid){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    DataDischarge tmp;
-    tmp.total_bill = total_bill;
-    tmp.paid = paid;
-    return r;
+
+Record_T Rec_disc_new(long long cost, long long pat_id, long long total_bill, long long paid) {
+    DataDischarge data = {.total_bill = total_bill, .paid = paid};
+    return Rec_load(REC_DISCHARGE, false,
+        pat_id, Time_now(), cost, &data, sizeof(data));
 }
-Record_T Rec_c_bed_new(
-    long long cost, long long pat_id,
-    long long from_ward_id, long long to_ward_id,
-    long long from_bed_id, long long to_bed_id){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    DataChangeBed tmp;
-    tmp.from_ward_id = from_ward_id;
-    tmp.to_ward_id = to_ward_id;
-    tmp.from_bed_id = from_bed_id;
-    tmp.to_bed_id = to_bed_id;
-    return r;
+
+Record_T Rec_c_bed_new(long long cost, long long pat_id,
+                       long long from_ward_id, long long to_ward_id,
+                       long long from_bed_id, long long to_bed_id) {
+    DataChangeBed data = {
+        .from_ward_id = from_ward_id,
+        .to_ward_id = to_ward_id,
+        .from_bed_id = from_bed_id,
+        .to_bed_id = to_bed_id
+    };
+    return Rec_load(REC_CHANGE_BED, false,
+        pat_id, Time_now(), cost, &data, sizeof(data));
 }
-Record_T Rec_c_doc_new(
-    long long cost, long long pat_id,
-    long long old_doc_id, long long new_doc_id){
-    Record_T r = safe_malloc(sizeof(struct Record_T));
-    r->cost = cost;
-    r->actor_id = pat_id;
-    DataChangeDoc tmp;
-    tmp.old_doc_id = old_doc_id;
-    tmp.new_doc_id = new_doc_id;
-    return r;
+
+Record_T Rec_c_doc_new(long long cost, long long pat_id, long long old_doc_id, long long new_doc_id) {
+    DataChangeDoc data = {.old_doc_id = old_doc_id, .new_doc_id = new_doc_id};
+    return Rec_load(REC_CHANGE_DOC, false, pat_id, Time_now(), cost, &data, sizeof(data));
 }
 void Rec_free(Record_T* r){
     ASSERT((r !=NULL),"不合法");
-    free(r);
     free(*r);
     *r = NULL;
 }
-
-
-
 
 // 获取公共属性
 RecordType Rec_type(Record_T r){

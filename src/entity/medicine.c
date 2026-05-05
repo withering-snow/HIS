@@ -1,5 +1,12 @@
 #include <medicine.h>
-static long long _id_counter=0;
+static long long _id_counter=1;
+static long long _next_bat_id = 1;
+
+// 新建批次：自动分配唯一内置 ID (对应 ID_NEW)
+#define BAT_ID_NEW() (_next_bat_id++)
+
+// 加载批次：设置起始 ID (对应 ID_LOAD)
+#define BAT_ID_LOAD(start) (_next_bat_id = (start))
 
 struct Medicine_T {
     long long   id;
@@ -14,11 +21,12 @@ Medicine_T Medicine_load(
     int total_remain, const char* name)
 {
     Medicine_T m=safe_malloc(sizeof(Medicine_T));
-    ASSERT(m !=NULL,"不合法");
+    LOAD_ID(id);
     m->id=id;
     m->cur_price=cur_price;
     m->total_remain=total_remain;
     strncpy(m->name,name,32);
+    List_new(sizeof(List_T));
     return m;
 }
 
@@ -31,6 +39,7 @@ Medicine_T Medicine_new(
     m->id=NEW_ID();
     m->cur_price=cur_price;
     strncpy(m->name,name,32);
+    List_new(sizeof(List_T));
     return m;
 }
 
@@ -38,7 +47,6 @@ Medicine_T Medicine_new(
 void Medicine_free(Medicine_T *m)
 {
     ASSERT(m !=NULL,"不合法");
-    free(m);
     free(*m);
     *m=NULL;
 }
@@ -72,7 +80,7 @@ const char* Medicine_name(Medicine_T m)
 }
 
 
-List_T* Medicine_batches(Medicine_T m)
+List_T Medicine_batches(Medicine_T m)
 {
     ASSERT(m !=NULL,"不合法");
     return m->batches;
@@ -86,9 +94,10 @@ Status Medicine_set_price(Medicine_T m, int new_price)
 }
 
 static void refresh_total_remain(Medicine_T m) {
+    long long tmp=List_size(m);
     int total = 0;
     MedicineBatch bat;
-    for (int i=0;i<m->total_remain;i++) {
+    for (int i=0;i<tmp;i++) {
         if (bat.status == AVAILABLE) {
             total += bat.remain;
         }
@@ -148,62 +157,118 @@ Status Medicine_batch_load(
     bat.buy_price=buy_price;
     bat.expire_ts=expire_ts;
     bat.remain=remain;
-    strncpy(bat.batch_no,batch_no,32);
     bat.status=status;
+    strncpy(bat.batch_no, batch_no, 31);
+    bat.batch_no[31] = '\0';
+    List_push_back(m,&bat);
     return HIS_OK;
 }
 
+int Medicine_total_stock(Medicine_T m) {
+    ASSERT(m != NULL,"不合法");
+    return m->total_remain;
+}
+
+// 设置药品总库存
+void Medicine_set_total_stock(Medicine_T m, int stock) {
+    ASSERT(m != NULL,"不合法");
+    m->total_remain = stock;
+}
 
 Status Medicine_batch_add(
     Medicine_T m,
-    long long buy_price, long long expire_ts, int remain, const char* batch_no)
+    long long buy_price, long long expire_ts,
+    int remain, const char* batch_no)
 {
-    ASSERT(m !=NULL,"不合法");
+    ASSERT(m != NULL, "不合法");
+    ASSERT(remain > 0, "批次库存必须大于0");
+
+    // 1. 构造批次结构体（从表实体）
     MedicineBatch bat;
-    bat.buy_price=buy_price;
-    bat.expire_ts=expire_ts;
-    strncpy(bat.batch_no,batch_no,32);
-    bat.remain=remain;
+
+    // 关键：自动分配 Batch 内置唯一ID
+    bat.id = BAT_ID_NEW();
+
+    bat.buy_price = buy_price;
+    bat.expire_ts = expire_ts;
+    bat.remain    = remain;
+    bat.status    = true;
+    strncpy(bat.batch_no, batch_no, sizeof(bat.batch_no) - 1);
+    bat.batch_no[sizeof(bat.batch_no) - 1] = '\0';
+    List_push_back(m, &bat);
+    Medicine_set_total_stock(m, Medicine_total_stock(m) + remain);
     return HIS_OK;
 }
 
 Status Medicine_deduct(Medicine_T m, int amount)
-{
-    ASSERT(m !=NULL,"不合法");
-    MedicineBatch bat;
-    bat.remain=amount;
+    {
+        ASSERT(m != NULL, "不合法");
+        ASSERT(amount > 0, "扣减数量必须大于0");
+        int total = Medicine_total_stock(m);
+        if (total < amount) {
+            return HIS_ERR_OUT_OF_STOCK;
+        }
+        int need = amount;
+    MedicineBatch* bat = (MedicineBatch*)List_first(m);
+    while (bat != NULL && need > 0) {
+        if (bat->remain > 0) {
+            int deduct = (bat->remain < need) ? bat->remain : need;
+            bat->remain -= deduct;
+            need -= deduct;
+        }
+        bat = (MedicineBatch*)List_next(m);
+    }
+    Medicine_set_total_stock(m, m->total_remain - amount);
     return HIS_OK;
-}
+    }
 
 
 Status Medicine_discard_batch(Medicine_T m, long long batch_id)
 {
-    ASSERT(m !=NULL,"不合法");
-    MedicineBatch bat;
-    bat.id=batch_id;
-    return HIS_OK;
+    ASSERT(m != NULL, "不合法");
+    ASSERT(batch_id > 0, "批次ID不合法");
+
+    // 1. 构造用于查找的 id 结构体
+    MedicineBatch search_Bat;
+    search_Bat.id = batch_id;
+    MedicineBatch* bat = (MedicineBatch*)List_find(
+        m,
+        &search_Bat,
+        Medicine_batch_cmp_id  // 按ID比较（你之前写的）
+    );
+    if (bat == NULL) {
+        return HIS_ERR_NOT_FOUND;
+    }
+    if (bat->status == false) {
+        return HIS_OK;
+    }
+    int discard_num = bat->remain;
+    bat->status = false;
+    bat->remain = 0;
+    int total = Medicine_total_stock(m);
+    Medicine_set_total_stock(m, total - discard_num);
 }
 
 
 int Medicine_batch_cmp_expire(const void* a, const void* b)
 {
-    MedicineBatch p=*(MedicineBatch *)a;
-    MedicineBatch q=*(MedicineBatch *)b;
-    return (p.expire_ts>q.expire_ts)-(p.expire_ts<q.expire_ts);
+    MedicineBatch *p=(MedicineBatch *)a;
+    MedicineBatch *q=(MedicineBatch *)b;
+    return (p->expire_ts>q->expire_ts)-(p->expire_ts<q->expire_ts);
 }
 
 
 int Medicine_batch_cmp_id(const void* a, const void* b)
 {
-    MedicineBatch p=*(MedicineBatch *)a;
-    MedicineBatch q=*(MedicineBatch *)b;
-    return (p.id>q.id)-(p.id<q.id);
+    MedicineBatch *p=(MedicineBatch *)a;
+    MedicineBatch *q=(MedicineBatch *)b;
+    return (p->id>q->id)-(p->id<q->id);
 }
 
 
 int Medicine_batch_cmp_remain(const void* a, const void* b)
 {
-    MedicineBatch p=*(MedicineBatch *)a;
-    MedicineBatch q=*(MedicineBatch *)b;
-    return (p.remain>q.remain)-(p.remain<q.remain);
+    MedicineBatch *p=(MedicineBatch *)a;
+    MedicineBatch *q=(MedicineBatch *)b;
+    return (p->remain>q->remain)-(p->remain<q->remain);
 }

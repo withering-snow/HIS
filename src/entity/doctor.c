@@ -24,7 +24,6 @@ Doctor_T Doctor_load(
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
     const char* name, const char* phone, const char* id_card){
     Doctor_T d=safe_malloc(sizeof(struct Doctor_T));
-    ASSERT(d !=NULL,"不合法");
     LOAD_ID(id);
     d->id=id;
     d->gender=gender;
@@ -41,7 +40,6 @@ Doctor_T Doctor_new(
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
     const char* name, const char* phone, const char* id_card){
     Doctor_T d=safe_malloc(sizeof(struct Doctor_T));
-    ASSERT(d !=NULL,"不合法");
     d->id=NEW_ID();
     d->gender=gender;
     d->birth_ts=birth_ts;
@@ -56,7 +54,6 @@ Doctor_T Doctor_new(
 
 void Doctor_free(Doctor_T* d){
     ASSERT(d !=NULL,"不合法");
-    free(d);
     free(*d);
     *d=NULL;
 }
@@ -123,6 +120,7 @@ Status Doctor_update(Doctor_T d, const Doctor_Update_Pack *pack){
     d->gender=pack->gender;
     d->birth_ts=pack->birth_ts;
     d->is_active=pack->is_active;
+    d->dept=pack->dept;
     d->title=pack->title;
     strncpy(d->name,pack->name,32);
     strncpy(d->phone,pack->phone,20);

@@ -4,7 +4,7 @@
 
 
 // 病人实体使用的id分配计数器，必须定义
-static long long _id_counter = 0;
+static long long _id_counter = 1;
 
 
 
@@ -56,7 +56,6 @@ Patient_T Patient_load(
 
 void Patient_free(Patient_T *p){
     ASSERT((p !=NULL),"不合法");
-    free(p);
     free(*p);
     *p=NULL;
 }
@@ -134,7 +133,7 @@ int Patient_cmp_gender(const void *a, const void *b){
 int Patient_cmp_age(const void *a, const void *b){
     Patient_T p=*(Patient_T *)a;
     Patient_T q=*(Patient_T *)b;
-    return (p->birth_ts > q->birth_ts) - (p->birth_ts < q->birth_ts);
+    return (p->birth_ts < q->birth_ts) - (p->birth_ts > q->birth_ts);
 }
 
 int Patient_cmp_name(const void *a, const void *b){

@@ -9,7 +9,6 @@ struct Fund_T {
 Fund_T Fund_load(long long pat_id, long long balance)
 {
     Fund_T f=safe_malloc(sizeof(Fund_T));
-    ASSERT(f !=NULL,"不合法");
     f->pat_id=pat_id;
     f->balance=balance;
     return f;
@@ -18,7 +17,6 @@ Fund_T Fund_load(long long pat_id, long long balance)
 Fund_T Fund_new(long long pat_id)
 {
     Fund_T f=safe_malloc(sizeof(Fund_T));
-    ASSERT(f !=NULL,"不合法");
     f->pat_id=pat_id;
     return f;
 }
@@ -26,7 +24,6 @@ Fund_T Fund_new(long long pat_id)
 void Fund_free(Fund_T* f)
 {
     ASSERT(f !=NULL,"不合法");
-    free(f);
     free(*f);
     *f=NULL;
 }
@@ -46,15 +43,19 @@ long long Fund_balance(Fund_T f)
 Status Fund_deposit(Fund_T f, long long amount)
 {
     ASSERT(f !=NULL,"不合法");
-    f->balance+=amount;
-    return HIS_OK ;
+    if (amount=0||amount<0)
+    return HIS_ERR_INVALID_PAYMENT;
+    else
+    {
+        f->balance+=amount;
+        return HIS_OK ;
+    }
 }
 
 Status Fund_can_afford(Fund_T f, long long amount)
 {
     ASSERT(f !=NULL,"不合法");
-    f->balance-=amount;
-    if(f->balance < 0)
+    if(f->balance < amount)
     return HIS_ERR_INSUFFICIENT_FUNDS ;
     else return  HIS_OK ;
 }

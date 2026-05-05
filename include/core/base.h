@@ -43,6 +43,7 @@ typedef enum {
     // Fund (财务) 业务相关
     HIS_ERR_INSUFFICIENT_FUNDS = -50,   // 余额不足
     HIS_ERR_PAYMENT_REQUIRED = -51,     // 未付款
+    HIS_ERR_INVALID_PAYMENT = -52,
 
     // 系统级/IO 错误
     HIS_ERR_IO_FAILURE = -60,               // io时发生错误

@@ -24,7 +24,7 @@ T Account_new(
     AccountClass class, long long actor_id,
     const char *name, const char *password_origin)
 ;
-T Account_free(T* a);
+void Account_free(T* a);
 
 // 密码验证
 // TODO: 注意患者类型不需要密码，需要特殊处理

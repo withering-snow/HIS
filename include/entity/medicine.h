@@ -37,7 +37,7 @@ long long Medicine_id(T m);
 long long Medicine_cur_price(T m);
 int Medicine_total_remain(T m);
 const char* Medicine_name(T m);
-List_T* Medicine_batches(T m);
+List_T Medicine_batches(T m);
 
 // 修改器
 Status Medicine_set_price(T m, int new_price);
