@@ -16,15 +16,58 @@ _cur_account_info = {
 };
 
 
-Status Serv_account_signup(
-    AccountClass class, long long actor_id,
-    const char *name, const char *password){
-    switch(class)
+
+
+Status Serv_account_init(){
+    List_T list = Data_get_account();
+    if(List_first(list) == NULL){
+        Account_T acc = Account_new(CLASS_ROOT, 0LL, "root", "root");
+        List_push_back(list, &acc);
+        return HIS_OK;
+    }
+    else{
+        return HIS_ERR_ALREADY_EXISTS;
+    }
 }
 
 
+Status Serv_account_signup(
+    AccountClass class, long long actor_id, const char *name, const char *password){
 
-Status Serv_account_signin(AccountClass class, long long actor_id, const char *password){
+    List_T list = Data_get_account();
+    void *find_ptr = List_first(list);
+    while(find_ptr != NULL){
+        Account_T tmp = *(Account_T*)find_ptr;
+        if(Account_id(tmp) == actor_id){
+            return HIS_ERR_ALREADY_EXISTS;
+        }
+        find_ptr = List_next(list);
+    }
+
+    if(class == CLASS_PATIENT){
+        Account_T acc = Account_new(class, actor_id, name, "00000000");
+        List_push_back(list, &acc);
+    }
+    else if(class == CLASS_DOCTOR){
+        if(Serv_permission_check(CLASS_ROOT) != HIS_OK){
+            return HIS_ERR_INSUFFICIENT_PERMISSION;
+        }
+        Account_T acc = Account_new(class, actor_id, name, password);
+        List_push_back(list, &acc);
+    }
+    else if(class == CLASS_ROOT){
+        return HIS_ERR_INSUFFICIENT_PERMISSION;
+    }
+    else{
+        return HIS_ERR_INVALID_ARG;
+    }
+
+    return HIS_OK;
+}
+
+
+Status Serv_account_signin(
+    AccountClass class, long long actor_id, const char *password){
     List_T list = Data_get_account();
     Account_T tmp = Account_load(class, actor_id, "tmp", "tmp");
     Status status = HIS_ERR_NOT_FOUND;
