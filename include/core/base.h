@@ -51,6 +51,8 @@ typedef enum {
     // 服务层级错误
     HIS_ERR_INSUFFICIENT_PERMISSION = -70,  // 当前账户权限不足
     HIS_ERR_NO_USER = -71,                  // 没有登录的用户
+
+    HIS_ERR_QUEUE_FULL = -73                // 挂号队列已满
 } Status;
 // ---------------- 状态码 ---------------- //
 

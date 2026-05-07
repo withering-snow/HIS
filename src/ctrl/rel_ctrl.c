@@ -154,7 +154,10 @@ Status Rel_queue_push(long long doc_id, long long pat_id, int sequence_no, int t
 
     while(tmp != NULL){
         if(tmp->doc_id == doc_id){
-            Rel_queue_node new_node = {pat_id, (time_frame * 10000) + sequence_no};
+            Rel_queue_node new_node = {
+                pat_id, (time_frame * 10000) + sequence_no,
+                sequence_no, time_frame}
+            ;
 
             Rel_queue_node* node = List_first(tmp->queue);
             while(node != NULL){
@@ -173,7 +176,10 @@ Status Rel_queue_push(long long doc_id, long long pat_id, int sequence_no, int t
     Rel_queue new_queue;
     new_queue.doc_id = doc_id;
     new_queue.queue = List_new(sizeof(Rel_queue_node));
-    Rel_queue_node new_node = {pat_id, (time_frame * 10000) + sequence_no};
+    Rel_queue_node new_node = {
+        pat_id, (time_frame * 10000) + sequence_no,
+        sequence_no, time_frame}
+    ;
     List_push_back(new_queue.queue, &new_node);
     List_push_back(Rel_queue_list, &new_queue);
     return HIS_OK;
@@ -220,13 +226,14 @@ long long Rel_queue_pop(long long doc_id){
 
 List_T Rel_queue_get_all(long long doc_id){
     Rel_queue* tmp = List_first(Rel_queue_list);
-    List_T list = List_new(sizeof(long long));
+    List_T list = List_new(sizeof(RelQueueDataPackage));
 
     while(tmp != NULL){
         if(tmp->doc_id == doc_id){
             Rel_queue_node* node = List_first(tmp->queue);
             while(node != NULL){
-                List_push_back(list, &(node->pat_id));
+                RelQueueDataPackage pkg = {node->pat_id, node->sequence_no, node->time_frame};
+                List_push_back(list, &pkg);
                 node = List_next(tmp->queue);
             }
             break;
@@ -251,7 +258,8 @@ void Rel_queue_update(){
             ((DataRegistration*)Rec_detail(record))->target_date == today)
         {
             DataRegistration* data = (DataRegistration*)Rec_detail(record);
-            Rel_queue_push(data->doc_id, Rec_actor_id(record), data->sequence_no, data->time_frame);
+            if(data->status == WAITING)
+                Rel_queue_push(data->doc_id, Rec_actor_id(record), data->sequence_no, data->time_frame);
         }
         find_ptr = List_next(records);
     }

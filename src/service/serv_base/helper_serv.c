@@ -51,6 +51,12 @@ const char* Serv_helper_id_to_name(long long id, ServEntityType type){
 }
 
 
+const char * Serv_helper_time_frame_to_name(long long time_frame){
+    if(time_frame>=0 && time_frame<17){
+        return time_frame_names[time_frame];
+    }
+    return time_frame_names[17];
+}
 
 
 #define T ServRecordDataPackage

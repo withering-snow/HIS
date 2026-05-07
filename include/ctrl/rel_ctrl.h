@@ -24,7 +24,14 @@ typedef struct {
 typedef struct{
     long long pat_id;
     long long priority_score;
+    int sequence_no;
+    int time_frame;
 }Rel_queue_node;
+typedef struct {
+    long long pat_id;
+    int       sequence_no;
+    int       time_frame;
+}RelQueueDataPackage;
 
 
 /*
@@ -122,10 +129,6 @@ bool Rel_has_doctor(long long patient_id);
 
 // =============================================================================
 // 实时叫号队列
-/*
- * 职责：管理医生今日的活跃接诊队列。
- * 逻辑：基于“准时”假设，队列内部按 time_slot 物理排序。
- */
 
 /**
  * @brief  将挂号/签到病人推入医生的今日队列
