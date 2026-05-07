@@ -28,8 +28,10 @@ Account_T Account_new(
     a->class=class;
     a->actor_id=actor_id;
     strncpy(a->name,name,32);
-    cipher_xor_cyclic(password_origin, strlen(password_origin));
-    strncpy(a->password,password_origin,32);
+    char word[32]={0};
+    strncpy(word,password_origin,32);
+    cipher_xor_cyclic(word, strlen(word));
+    strncpy(a->password,word,32);
     return a;
 }
 
@@ -43,7 +45,10 @@ void Account_free(Account_T* a)
 Status Account_check_password(Account_T a, const char *password_origin)
 {
     ASSERT(a !=NULL,"不合法");
-    cipher_xor_cyclic(password_origin, strlen(password_origin));
+    char word[32]={0};
+    strncpy(word,password_origin,32);
+    cipher_xor_cyclic(word, strlen(word));
+    strncpy(a->password,word,32);
     if (a->password[0]!=*password_origin)
         return HIS_ERR_PASSWORD_MISMATCH;
     else return HIS_OK;
@@ -90,8 +95,10 @@ Status Account_set_actor_name(Account_T a, char *new_name)
 Status Account_set_password(Account_T a, char *new_password_origin)
 {
     ASSERT(a !=NULL,"不合法");
-    cipher_xor_cyclic(new_password_origin, strlen(new_password_origin));
-    strncpy(a->password,new_password_origin,32);
+    char word[32]={0};
+    strncpy(word,new_password_origin,32);
+    cipher_xor_cyclic(word, strlen(word));
+    strncpy(a->password,word,32);
     return HIS_OK;
 }
 

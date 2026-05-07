@@ -43,7 +43,7 @@ long long Fund_balance(Fund_T f)
 Status Fund_deposit(Fund_T f, long long amount)
 {
     ASSERT(f !=NULL,"不合法");
-    if (amount=0||amount<0)
+    if (amount<=0)
     return HIS_ERR_INVALID_PAYMENT;
     else
     {
@@ -57,7 +57,7 @@ Status Fund_can_afford(Fund_T f, long long amount)
     ASSERT(f !=NULL,"不合法");
     if(f->balance < amount)
     return HIS_ERR_INSUFFICIENT_FUNDS ;
-    else return  HIS_OK ;
+    return  HIS_OK ;
 }
 
 void Fund_withdraw(Fund_T f, long long amount)

@@ -1,6 +1,6 @@
 #include <doctor.h>
 
-static long long _id_counter=0;
+static long long _id_counter=1;
 
 
 struct Doctor_T {
