@@ -166,6 +166,18 @@ void Rec_set_invalid(Record_T r){
     r->is_invalid = true;
 }
 
+Status Rec_set_reg_status(Record_T r, int new_status)
+{
+    ASSERT((r !=NULL),"不合法");
+    if (r->type != REC_REGISTRATION) {
+        return HIS_ERR_STATUS_ERROR;
+    }
+    if (new_status < APPOINTMENT || new_status > COMPLETED) {
+        return HIS_ERR_INVALID_STATUS;
+    }
+    r->detail.reg.status = (RegistrationStatus)new_status;
+    return HIS_OK;
+}
 
 //TODO：以下作废
 

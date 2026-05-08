@@ -54,7 +54,11 @@ typedef enum {
     HIS_ERR_NO_USER = -71,
 
     //Account（账号）错误
-    HIS_ERR_PASSWORD_MISMATCH = -72
+    HIS_ERR_PASSWORD_MISMATCH = -72,
+
+    //Record（记录）错误
+    HIS_ERR_STATUS_ERROR = -80,
+    HIS_ERR_INVALID_STATUS = -81,
 } Status;
 // ---------------- 状态码 ---------------- //
 
