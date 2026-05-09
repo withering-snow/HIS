@@ -183,6 +183,45 @@ static inline void cipher_xor_cyclic(char* data, size_t data_len) {
         data[i] ^= key[i % key_len];
     }
 }
+
+
+// 终端清空指令
+#ifdef __unix__
+#define CLEAN() system("clear")
+#elif defined(_WIN32) || defined(_WIN64)
+#define CLEAN() system("cls")
+#endif
+
+
+// 暂停指令，单位统一为 ms
+#ifdef _WIN32
+#include <windows.h>
+#define SLEEP_MS(ms) Sleep(ms)
+#else
+#include <unistd.h>
+#define SLEEP_MS(ms) usleep((ms) * 1000)
+#endif
+
+
+// ui需要用到的交互函数包
+#define load_ui_tools                                               \
+static void clear_space() {                                         \
+    int c;                                                          \
+    while ((c = getchar()) != '\n' && c != EOF) ;                   \
+}                                                                   \
+static int get_input_int(const char* prompt, int min, int max) {    \
+    int val;                                                        \
+    while (1) {                                                     \
+        printf("%s (%d-%d): ", prompt, min, max);                   \
+        if (scanf("%d", &val) != 1 || val < min || val > max) {     \
+            printf("请输入位于区间[%d, %d]的合法数字\n", min, max);     \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        clear_space();                                              \
+        return val;                                                 \
+    }                                                               \
+}
 // ---------------- 工具 ---------------- //
 
 
