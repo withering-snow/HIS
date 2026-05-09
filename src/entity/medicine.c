@@ -2,13 +2,12 @@
 static long long _id_counter=1;
 static long long _next_bat_id = 1;
 
-// 新建批次：自动分配唯一内置 ID (对应 ID_NEW)
-#define BAT_ID_NEW() (_next_bat_id++)
+#define BAT_ID_NEW()     ((_next_bat_id < LLONG_MAX)? (_next_bat_id++): INVALID_ID)
 
 // 加载批次：设置起始 ID (对应 ID_LOAD)
 #define BAT_ID_LOAD(id) \
 do{ \
-if(id > _id_counter) _id_counter = id; \
+if(id > _next_bat_id) _next_bat_id = id; \
 }while(0)
 
 struct Medicine_T {
@@ -112,7 +111,7 @@ static void refresh_total_remain(Medicine_T m) {
 Status Medicine_update_remain(Medicine_T m)
 {
     ASSERT(m !=NULL,"不合法");
-    refresh_total_remain(m);;
+    refresh_total_remain(m);
     return HIS_OK;
 }
 
