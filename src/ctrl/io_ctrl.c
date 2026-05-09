@@ -1,7 +1,13 @@
 #include <io_ctrl.h>
 
+
+
+
 // TODO： 临时函数，解决从表返回值后删除
 static List_T __tmp_list();
+
+
+
 
 Status Io_save_patient()
 {
@@ -28,7 +34,6 @@ Status Io_save_patient()
 }
 
 
-
 Status Io_load_patient()
 {
     char dir[32];
@@ -42,21 +47,24 @@ Status Io_load_patient()
     fgets(dummy,sizeof(dummy),fp);
     List_T List_patient = Data_get_patient();
 
-    while (feof(fp))
+    long long id; gender gender; long long birth_ts;
+    char name[32]; char phone[20]; char id_card[20];
+
+    while (
+        fscanf(fp, "%lld|%d|%lld|%31[^|]|%19[^|]|%19[^|]\n",
+            &id, &gender, &birth_ts, name, phone, id_card)
+            == 6)
     {
-        long long id; gender gender; long long birth_ts;
-        char name[32]; char phone[20]; char id_card[20];
-        if (fscanf(fp, "%lld|%d|%lld|%s|%s|%s\n",
-                &id, &gender, &birth_ts, name, phone, id_card)!=6)
-        {
-            return HIS_ERR_IO_FAILURE;
-        }
         Patient_T pat = Patient_load(id, gender, birth_ts, name, phone, id_card);
         List_push_back(List_patient, &pat);
     }
+
     fclose(fp);
     return HIS_OK;
 }
+
+
+
 
 Status  Io_save_doctor()
 {
@@ -82,7 +90,9 @@ Status  Io_save_doctor()
     fclose(fp);
     return HIS_OK;
 
-};
+}
+
+
 Status Io_load_doctor()
 {
     char dir[32];
@@ -95,25 +105,29 @@ Status Io_load_doctor()
     char dummy[256];
     fgets(dummy,sizeof(dummy),fp);
     List_T List_doctor = Data_get_doctor();
-    while (feof(fp))
+
+
+    long long   id;             gender      gender;           long long   birth_ts;
+    int         is_active_int;  bool        is_active;        Department  dept;
+    DoctorTitle title;          char        name[32];
+    char        phone[20];      char        id_card[20];
+
+    while (
+        fscanf(fp, "%lld|%d|%lld|%d|%d|%d|%31[^|]|%19[^|]|%19[^|]\n",
+            &id, &gender, &birth_ts, &is_active_int, &dept, &title, name, phone, id_card)
+            == 9)
     {
-        long long   id;           gender gender;   long long   birth_ts;
-        bool        is_active;    Department  dept;
-        DoctorTitle title;        char        name[32];
-        char        phone[20];    char        id_card[20];
-        if (fscanf(fp, "%lld|%d|%lld|%d|%d|%d|%s|%s|%s\n",
-            &id, &gender, &birth_ts,
-            &is_active, &dept,&title, name,
-            phone, id_card)!= 9)
-        {
-            return HIS_ERR_IO_FAILURE;
-        }
+        is_active = (bool)is_active_int;
         Doctor_T doc = Doctor_load(id, gender, birth_ts, is_active, dept, title, name, phone, id_card);
         List_push_back(List_doctor, &doc);
     }
+
     fclose(fp);
     return HIS_OK;
-    };
+}
+
+
+
 
 Status Io_save_fund()
 {
@@ -136,7 +150,9 @@ Status Io_save_fund()
     }
     fclose(fp);
     return HIS_OK;
-};
+}
+
+
 Status Io_load_fund()
 {
     char dir[32];
@@ -145,23 +161,27 @@ Status Io_load_fund()
     FILE *fp = fopen(dir, "r");
     if (fp == NULL){
         return HIS_ERR_IO_FAILURE;
-    };
+    }
     char dummy[256];
     fgets(dummy,sizeof(dummy),fp);
     List_T List_fund = Data_get_fund();
-    while (feof(fp))
+
+    long long pat_id;  long long balance;
+
+    while (fscanf(fp,"%lld|%lld\n", &pat_id, &balance)
+        == 2)
     {
-        long long pat_id;  long long balance;
-        if (fscanf(fp,"%lld|%lld\n",&pat_id,&balance)!=2)
-        {
-                return HIS_ERR_IO_FAILURE;
-        }
         Fund_T fund = Fund_load(pat_id, balance);
         List_push_back(List_fund, &fund);
     }
+
     fclose(fp);
     return HIS_OK;
-    };
+}
+
+
+
+
 Status Io_save_medicine()
 {
     char dir[32];
@@ -206,7 +226,9 @@ Status Io_save_medicine()
 
     fclose(fp);
     return HIS_OK;
-};
+}
+
+
 Status Io_load_medicine()
 {
     char dir[32];
@@ -215,19 +237,20 @@ Status Io_load_medicine()
     FILE *fp = fopen(dir, "r");
     if (fp == NULL){
         return HIS_ERR_IO_FAILURE;
-    };
+    }
     char dummy[256];
     fgets(dummy,sizeof(dummy),fp);
     List_T List_med = Data_get_medicine();
+
     Medicine_T recent_med = NULL;  char type = 'M';
-    while (feof(fp))
+
+    while (fscanf(fp, "%c|", &type))
     {
-        fscanf(fp, "%c|", &type);
         if (type == 'M')
         {
             long long   id;           long long   cur_price;
             int         total_remain; char        name[32];
-            if (fscanf(fp,"%lld|%lld|%d|%s\n",&id,&cur_price, &total_remain,name)!=4)
+            if (fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &id,&cur_price, &total_remain, name) != 4)
             {
                 return HIS_ERR_IO_FAILURE;
             }
@@ -238,7 +261,7 @@ Status Io_load_medicine()
         else
         {
             MedicineBatch bat;
-            fscanf(fp, "%lld|%lld|%lld|%d|%d|%s\n",
+            fscanf(fp, "%lld|%lld|%lld|%d|%d|%31[^|]\n",
                 &bat.id,
                 &bat.buy_price,
                 &bat.expire_ts,
@@ -251,6 +274,9 @@ Status Io_load_medicine()
     fclose(fp);
     return HIS_OK;
 }
+
+
+
 
 Status Io_save_account()
 {
@@ -267,12 +293,21 @@ Status Io_save_account()
     while (acc_ptr != NULL)
     {
         Account_T acc = *(Account_T *)acc_ptr;
-        fprintf(fp,"%d|%lld|%s|%s\n",Account_class(acc),Account_id(acc),Account_name(acc),Account_password(acc));
+        fprintf(fp,"%d|%lld|%s|",Account_class(acc),Account_id(acc),Account_name(acc));
+
+        const unsigned char* password = (const unsigned char*)Account_password(acc);
+        for (int i = 0; i < 32; i++) {
+            fprintf(fp, "%02X", password[i]);
+        }
+        fprintf(fp, "\n");
+
         acc_ptr = List_next(List_account);
     }
     fclose(fp);
     return HIS_OK;
-};
+}
+
+
 Status Io_load_account()
 {
     char dir[32];
@@ -285,23 +320,32 @@ Status Io_load_account()
     char dummy[256];
     fgets(dummy,sizeof(dummy),fp);
     List_T List_account = Data_get_account();
-    while (feof(fp))
+
+    AccountClass    class;
+    long long       actor_id;
+    char            name[32];
+
+    while (fscanf(fp, "%d|%lld|%31[^|]|",
+            &class, &actor_id, name)
+            == 3)
     {
-        AccountClass    class;
-        long long       actor_id;
-        char            name[32];
-        char            password[32];
-        if (fscanf(fp, "%d|%lld|%s|%s\n",
-            &class,&actor_id,name,password)!= 4)
-        {
-            return HIS_ERR_IO_FAILURE;
+        unsigned char password[32] = {0};
+        for (int i = 0; i < 32; i++){
+            fscanf(fp,"%02hhX", &password[i]);
         }
-        Account_T acc = Account_load(class,actor_id,name,password);
+        fscanf(fp, "\n");
+
+        Account_T acc = Account_load(class, actor_id, name, (char*)password);
         List_push_back(List_account, &acc);
     }
+
     fclose(fp);
     return HIS_OK;
-};
+}
+
+
+
+
 Status Io_save_ward()
 {
     char dir[32];
@@ -310,7 +354,7 @@ Status Io_save_ward()
     FILE *fp = fopen(dir, "r");
     if (fp == NULL){
         return HIS_ERR_IO_FAILURE;
-    };
+    }
     List_T List_ward = Data_get_ward();
     void* ward_ptr = List_first(List_ward);
 
@@ -345,7 +389,9 @@ Status Io_save_ward()
     fclose(fp);
     return HIS_OK;
 
-};
+}
+
+
 Status Io_load_ward()
 {
     char dir[32];
@@ -358,10 +404,11 @@ Status Io_load_ward()
     char dummy[256];
     fgets(dummy,sizeof(dummy),fp);
     List_T List_ward = Data_get_ward();
+
     Ward_T recent_ward = NULL;char type = 'W';
-    while (feof(fp))
+
+    while (fscanf(fp,"%c|",&type))
     {
-        fscanf(fp,"%c|",&type);
         if (type=='W')
         {
             long long   id;
@@ -369,29 +416,31 @@ Status Io_load_ward()
             long long   daily_cost;
             int         bed_count;
             int         empty_count;
-            if (fscanf(fp,"W|%lld|%d|%lld|%s|%s\n",&id,&dept,&daily_cost,&bed_count,&empty_count)!=5)
+            if (fscanf(fp,"W|%lld|%d|%lld|%d|%d\n",&id,&dept,&daily_cost,&bed_count,&empty_count)!=5)
             {
                 return HIS_ERR_IO_FAILURE;
             }
             Ward_T ward = Ward_load(id,dept,daily_cost);
-            recent_ward=ward;
+            recent_ward = ward;
             List_push_back(List_ward, &ward);
         }
         else
         {
-            Bed_T* bed ;
-
-
+            Bed_T bed ;
             fscanf(fp, "B|%d|%lld|%d|%lld|\n",
-                &bed->bed_label,
-                &bed->pat_id,
-                &bed->status,
-                &bed->start_ts);
+                &bed.bed_label,
+                &bed.pat_id,
+                &bed.status,
+                &bed.start_ts);
         }
     }
     fclose(fp);
     return HIS_OK;
-};
+}
+
+
+
+
 Status Io_save_record()
 {
     char dir[32];
@@ -407,68 +456,68 @@ Status Io_save_record()
     while (rec_ptr != NULL)
     {
         Record_T rec = *(Record_T *)rec_ptr;
-        fprintf(fp,"%d|%d|%lld|%lld|%lld",Rec_type(rec),Rec_is_invalid(rec),Rec_actor_id(rec),Rec_time_stamp(rec),Rec_cost(rec));
+        fprintf(fp,"%d|%d|%lld|%lld|%lld\n",Rec_type(rec),Rec_is_invalid(rec),Rec_actor_id(rec),Rec_time_stamp(rec),Rec_cost(rec));
         switch (Rec_type(rec))
         {
         case REC_REGISTRATION:
             {
                 DataRegistration* data = (DataRegistration*)Rec_detail(rec);
-                fprintf(fp,"%lld|%d|%d|%d",data->doc_id,data->sequence_no,data->target_date,data->time_frame);
+                fprintf(fp,"%lld|%d|%d|%d\n",data->doc_id,data->sequence_no,data->target_date,data->time_frame);
                 break;
             }
 
         case REC_CONSULTATION:
             {
                 DataConsultation* data = (DataConsultation*)Rec_detail(rec);
-                fprintf(fp,"%lld|%s|%s",data->doc_id,data->diagnosis,data->advice);
+                fprintf(fp,"%lld|%s|%s\n",data->doc_id,data->diagnosis,data->advice);
                 break;
             };
         case REC_EXAMINATION:
             {
                 DataExamination* data = (DataExamination*)Rec_detail(rec);
-                fprintf(fp,"%lld|%s",data->doc_id,data->exam_name);
+                fprintf(fp,"%lld|%s\n",data->doc_id,data->exam_name);
                 break;
             };
         case REC_PRESCRIPTION:
             {
                 DataPrescription* data = (DataPrescription*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%d",data->doc_id,data->med_id,data->amount);
+                fprintf(fp,"%lld|%lld|%d\n",data->doc_id,data->med_id,data->amount);
                 break;
             };
         case REC_ADMISSION:
             {
                 DataAdmission* data = (DataAdmission*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld",data->ward_id,data->bed_id,data->deposit);
+                fprintf(fp,"%lld|%lld|%lld\n",data->ward_id,data->bed_id,data->deposit);
                 break;
             };
         case REC_DISCHARGE:
             {
                 DataDischarge* data = (DataDischarge*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld",data->total_bill,data->paid);
+                fprintf(fp,"%lld|%lld\n",data->total_bill,data->paid);
                 break;
             };
         case REC_CHANGE_BED:
             {
                 DataChangeBed* data = (DataChangeBed*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld|%lld",data->from_ward_id,data->to_ward_id,data->from_bed_id,data->to_bed_id);
+                fprintf(fp,"%lld|%lld|%lld|%lld\n",data->from_ward_id,data->to_ward_id,data->from_bed_id,data->to_bed_id);
                 break;
             };
         case REC_CHANGE_DOC:
             {
                 DataChangeDoc* data = (DataChangeDoc*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld",data->old_doc_id,data->new_doc_id);//改成past和present更合适
+                fprintf(fp,"%lld|%lld\n",data->old_doc_id,data->new_doc_id);//改成past和present更合适
                 break;
             };
         case REC_STOCK_IN:
             {
                 DataStackIn* data = (DataStackIn*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld|%lld|%d|%s",data->med_id,data->batch_id,data->buy_price,data->expire_ts,data->total,data->batch_no);
+                fprintf(fp,"%lld|%lld|%lld|%lld|%d|%s\n",data->med_id,data->batch_id,data->buy_price,data->expire_ts,data->total,data->batch_no);
                 break;
             };
         case REC_STOCK_OUT:
             {
                 DataStackOut* data = (DataStackOut*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%d|%s",data->med_id,data->batch_id,data->total,data->batch_no);
+                fprintf(fp,"%lld|%lld|%d|%s\n",data->med_id,data->batch_id,data->total,data->batch_no);
                 break;
             };
 
@@ -479,119 +528,124 @@ Status Io_save_record()
     return HIS_OK;
 }
 
+
 Status Io_load_record()
-    {
-        char dir[32];
-        snprintf(dir, sizeof(dir), "data%cRecord.txt", SEP);
+{
+    char dir[32];
+    snprintf(dir, sizeof(dir), "data%cRecord.txt", SEP);
 
-        FILE *fp = fopen(dir, "r");
-        if (fp == NULL){
-            return HIS_ERR_IO_FAILURE;
-        };
-        char dummy[256];
-        fgets(dummy,sizeof(dummy),fp);
-        List_T List_record = Data_get_record();
-        void* record_ptr = List_first(List_record);
-        while (feof(fp))
-        {
-
-            RecordType      type;
-            bool            is_invalid;
-            long long       actor_id;
-            long long       time_stamp;
-            long long       cost;
-            if (fscanf(fp,"%d|%d|%lld|%lld|%lld\n",&type,&is_invalid,
-            &actor_id,&time_stamp,&cost)!=5)
-            {
-                return HIS_ERR_IO_FAILURE;
-            }
-
-
-            switch (type)
-            {
-            case REC_REGISTRATION:
-                {
-                    DataRegistration data;
-                    fscanf(fp,"%lld|%d|%d|%d", &data.doc_id, &data.sequence_no,&data.target_date,&data.time_frame);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_CONSULTATION:
-                {
-                    DataConsultation data;
-                    fscanf(fp,"%lld|%s|%s", &data.doc_id, data.diagnosis,data.advice);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_EXAMINATION:
-                {
-                    DataExamination data;
-                    fscanf(fp,"%lld|%s", &data.doc_id, data.exam_name);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_PRESCRIPTION:
-                {
-                    DataPrescription data;
-                    fscanf(fp,"%lld|%lld|%d", &data.doc_id, &data.med_id,&data.amount);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_ADMISSION:
-                {
-                    DataAdmission data;
-                    fscanf(fp,"%lld|%lld|%lld", &data.ward_id, &data.bed_id,&data.deposit);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_DISCHARGE:
-                {
-                    DataDischarge data;
-                    fscanf(fp,"%lld|%lld", &data.total_bill, &data.paid);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_CHANGE_BED:
-                {
-                    DataChangeBed data;
-                    fscanf(fp,"%lld|%lld|%lld|%lld",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_id,&data.to_bed_id);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_CHANGE_DOC:
-                {
-                    DataChangeDoc data;
-                    fscanf(fp,"%lld|%lld", &data.old_doc_id, &data.new_doc_id);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_STOCK_IN:
-                {
-                    DataStackIn data;
-                    fscanf(fp,"%lld|%lld|%lld|%lld|%d|%s", &data.med_id, &data.batch_id,&data.buy_price,&data.expire_ts,data.total,data.batch_no);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            case REC_STOCK_OUT:
-                {
-                    DataStackOut data;
-                    fscanf(fp,"%lld|%lld|%d|%s", &data.med_id, &data.batch_id,&data.total,&data.batch_no);
-                    Rec_load(type, is_invalid, actor_id, time_stamp, cost,
-                            &data, sizeof(data));
-                    break;
-                }
-            }
-            record_ptr = List_next(List_record);
-        }
-        fclose(fp);
-        return HIS_OK;
+    FILE *fp = fopen(dir, "r");
+    if (fp == NULL){
+        return HIS_ERR_IO_FAILURE;
     }
+    char dummy[256];
+    fgets(dummy,sizeof(dummy),fp);
+    List_T List_record = Data_get_record();
+
+    RecordType      type;
+    int             is_invalid_int;
+    bool            is_invalid;
+    long long       actor_id;
+    long long       time_stamp;
+    long long       cost;
+
+    while (fscanf(fp,"%d|%d|%lld|%lld|%lld\n",
+        &type,&is_invalid_int, &actor_id,&time_stamp,&cost)
+        == 5)
+    {
+        is_invalid = (bool)is_invalid_int;
+        Record_T rec = NULL;
+        switch (type)
+        {
+            case REC_REGISTRATION:
+            {
+                DataRegistration data;
+                fscanf(fp,"%lld|%d|%d|%d\n", &data.doc_id, &data.sequence_no,&data.target_date,&data.time_frame);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_CONSULTATION:
+            {
+                DataConsultation data;
+                fscanf(fp,"%lld|%127[^|]|%127[^|]\n", &data.doc_id, data.diagnosis,data.advice);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_EXAMINATION:
+            {
+                DataExamination data;
+                fscanf(fp,"%lld|%63[^|]\n", &data.doc_id, data.exam_name);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_PRESCRIPTION:
+            {
+                DataPrescription data;
+                fscanf(fp,"%lld|%lld|%d\n", &data.doc_id, &data.med_id,&data.amount);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_ADMISSION:
+            {
+                DataAdmission data;
+                fscanf(fp,"%lld|%lld|%lld\n", &data.ward_id, &data.bed_id,&data.deposit);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_DISCHARGE:
+            {
+                DataDischarge data;
+                fscanf(fp,"%lld|%lld\n", &data.total_bill, &data.paid);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_CHANGE_BED:
+            {
+                DataChangeBed data;
+                fscanf(fp,"%lld|%lld|%lld|%lld\n",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_id,&data.to_bed_id);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_CHANGE_DOC:
+            {
+                DataChangeDoc data;
+                fscanf(fp,"%lld|%lld\n", &data.old_doc_id, &data.new_doc_id);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_STOCK_IN:
+            {
+                DataStackIn data;
+                fscanf(fp,"%lld|%lld|%lld|%lld|%d|%31[^|]\n",
+                    &data.med_id, &data.batch_id,&data.buy_price,&data.expire_ts,&data.total,data.batch_no);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+            case REC_STOCK_OUT:
+            {
+                DataStackOut data;
+                fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &data.med_id, &data.batch_id,&data.total,data.batch_no);
+                rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
+                    &data, sizeof(data));
+                break;
+            }
+        }
+
+        if(rec != NULL){
+            List_push_back(List_record, &rec);
+        }
+
+    }
+
+    fclose(fp);
+    return HIS_OK;
+}
