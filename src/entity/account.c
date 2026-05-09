@@ -47,10 +47,9 @@ Status Account_check_password(Account_T a, const char *password_origin)
     ASSERT(a !=NULL,"不合法");
     char word[32]={0};
     strncpy(word,password_origin,32);
-    cipher_xor_cyclic(word, strlen(word));
-    strncpy(a->password,word,32);
-    if (a->password[0]!=*password_origin)
+    if (strncmp(a->password, word, 32) != 0){
         return HIS_ERR_PASSWORD_MISMATCH;
+    }
     else return HIS_OK;
 }
 

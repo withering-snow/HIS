@@ -160,7 +160,7 @@ void* Rec_detail(T r);
 // 逻辑作废该条记录
 void Rec_set_invalid(T r);
 
-Status Rec_set_reg_status(Record_T r, int new_status);
+Status Rec_set_reg_status(Record_T r, RegistrationStatus new_status);
 
 //TODO：以下作废
 

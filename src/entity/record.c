@@ -166,7 +166,7 @@ void Rec_set_invalid(Record_T r){
     r->is_invalid = true;
 }
 
-Status Rec_set_reg_status(Record_T r, int new_status)
+Status Rec_set_reg_status(Record_T r, RegistrationStatus new_status)
 {
     ASSERT((r !=NULL),"不合法");
     if (r->type != REC_REGISTRATION) {
