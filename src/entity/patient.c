@@ -133,7 +133,7 @@ int Patient_cmp_gender(const void *a, const void *b){
 int Patient_cmp_age(const void *a, const void *b){
     Patient_T p=*(Patient_T *)a;
     Patient_T q=*(Patient_T *)b;
-    return (p->birth_ts < q->birth_ts) - (p->birth_ts > q->birth_ts);
+    return (p->birth_ts > q->birth_ts) - (p->birth_ts < q->birth_ts);
 }
 
 int Patient_cmp_name(const void *a, const void *b){

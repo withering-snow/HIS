@@ -15,8 +15,9 @@ Account_T Account_load(
     a->class=class;
     a->actor_id=actor_id;
     strncpy(a->name,name,32);
-    cipher_xor_cyclic(password, strlen(password));
-    strncpy(a->password,password,32);
+    char buf[32] = {0};
+    strncpy(buf, password, 32);
+    memcpy(a->password, buf, 32);
     return a;
 }
 
@@ -28,10 +29,10 @@ Account_T Account_new(
     a->class=class;
     a->actor_id=actor_id;
     strncpy(a->name,name,32);
-    char word[32]={0};
-    strncpy(word,password_origin,32);
-    cipher_xor_cyclic(word, strlen(word));
-    strncpy(a->password,word,32);
+    char buf[32]={0};
+    strncpy(buf,password_origin,32);
+    cipher_xor_cyclic(buf, strlen(buf));
+    memcpy(a->password, buf, 32);
     return a;
 }
 
@@ -45,12 +46,13 @@ void Account_free(Account_T* a)
 Status Account_check_password(Account_T a, const char *password_origin)
 {
     ASSERT(a !=NULL,"不合法");
-    char word[32]={0};
-    strncpy(word,password_origin,32);
-    if (strncmp(a->password, word, 32) != 0){
+    char buf[32]={0};
+    strncpy(buf,password_origin,32);
+    cipher_xor_cyclic(buf, strlen(buf));
+    if (memcmp(a->password, buf, 32) != 0){
         return HIS_ERR_PASSWORD_MISMATCH;
     }
-    else return HIS_OK;
+    return HIS_OK;
 }
 
 AccountClass Account_class(Account_T a)
@@ -126,5 +128,5 @@ int Account_cmp_password(const void* a, const void* b)
 {
     Account_T p=*(Account_T *)a;
     Account_T q=*(Account_T *)b;
-    return strncmp(p->password,q->name,32);
+    return strncmp(p->password,q->password,32);
 }

@@ -134,7 +134,7 @@ Status Doctor_update(Doctor_T d, const Doctor_Update_Pack *pack){
 int Doctor_cmp_id(const void *a, const void *b){
     Doctor_T p=*(Doctor_T *)a;
     Doctor_T q=*(Doctor_T *)b;
-    return (p->id>q->id)-(p->id-q->id);
+    return (p->id>q->id)-(p->id<q->id);
 }
 
 int Doctor_cmp_gender(const void *a, const void *b){
@@ -189,5 +189,5 @@ int Doctor_cmp_fuzzy(const void *a, const void *b){
     Doctor_T p=*(Doctor_T *)a;
     if (strstr(p->name,b)!=NULL)
         return HIS_OK;
-    else  return HIS_ERR_NOT_FOUND;
+    return HIS_ERR_NOT_FOUND;
 }

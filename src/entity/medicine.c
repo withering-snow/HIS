@@ -28,7 +28,7 @@ Medicine_T Medicine_load(
     m->cur_price=cur_price;
     m->total_remain=total_remain;
     strncpy(m->name,name,32);
-    List_new(sizeof(MedicineBatch));
+    m->batches = List_new(sizeof(MedicineBatch));
     return m;
 }
 
@@ -41,7 +41,7 @@ Medicine_T Medicine_new(
     m->id=NEW_ID();
     m->cur_price=cur_price;
     strncpy(m->name,name,32);
-    m->batches=List_new(sizeof(MedicineBatch));
+    m->batches = List_new(sizeof(MedicineBatch));
     return m;
 }
 
