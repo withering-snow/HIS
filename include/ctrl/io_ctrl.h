@@ -12,18 +12,8 @@
 #endif
 
 
-Status Io_save_patient();
-Status Io_load_patient();
-Status Io_save_doctor();
-Status Io_load_doctor();
-Status Io_save_fund();
-Status Io_load_fund();
-Status Io_load_medicine();
-Status Io_save_medicine();
-Status Io_save_account();
-Status Io_load_account();
-Status Io_save_ward();
-Status Io_load_ward();
-Status Io_save_record();
-Status Io_load_record();
+Status Io_save();
+Status Io_load();
+
+
 #endif// HIS_IO_CTRL_H
