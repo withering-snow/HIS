@@ -13,6 +13,7 @@ struct Doctor_T {
     char        name[32];     // 姓名
     char        phone[20];    // 手机号
     char        id_card[20];  // 身份证号
+    long long   reg_fee;      //挂号费用
 };
 
 
@@ -22,7 +23,7 @@ struct Doctor_T {
 Doctor_T Doctor_load(
     long long id,
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
-    const char* name, const char* phone, const char* id_card){
+    const char* name, const char* phone, const char* id_card, long long reg_fee){
     Doctor_T d=safe_malloc(sizeof(struct Doctor_T));
     LOAD_ID(id);
     d->id=id;
@@ -34,11 +35,12 @@ Doctor_T Doctor_load(
     strncpy(d->name,name,32);
     strncpy(d->phone,phone,20);
     strncpy(d->id_card,id_card,20);
+    d->reg_fee=reg_fee;
     return d;
 }
 Doctor_T Doctor_new(
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
-    const char* name, const char* phone, const char* id_card){
+    const char* name, const char* phone, const char* id_card, long long reg_fee){
     Doctor_T d=safe_malloc(sizeof(struct Doctor_T));
     d->id=NEW_ID();
     d->gender=gender;
@@ -49,6 +51,7 @@ Doctor_T Doctor_new(
     strncpy(d->name,name,32);
     strncpy(d->phone,phone,20);
     strncpy(d->id_card,id_card,20);
+    d->reg_fee=reg_fee;
     return d;
 }
 
@@ -111,7 +114,11 @@ const char * Doctor_id_card(Doctor_T d){
     return d->id_card;
 }
 
-
+long long Doctor_reg_feet(Doctor_T d)
+{
+    ASSERT(d !=NULL,"不合法");
+    return d->reg_fee;
+}
 
 
 Status Doctor_update(Doctor_T d, const Doctor_Update_Pack *pack){
@@ -125,6 +132,7 @@ Status Doctor_update(Doctor_T d, const Doctor_Update_Pack *pack){
     strncpy(d->name,pack->name,32);
     strncpy(d->phone,pack->phone,20);
     strncpy(d->id_card,pack->id_card,20);
+    d->reg_fee=pack->reg_fee;
     return HIS_OK;
 }
 
@@ -180,6 +188,12 @@ int Doctor_cmp_phone(const void *a, const void *b){
 }
 
 int Doctor_cmp_id_card(const void *a, const void *b){
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
+    return strncmp(p->id_card,q->id_card,20);
+}
+
+int Doctor_cmp_reg_fee(const void *a, const void *b){
     Doctor_T p=*(Doctor_T *)a;
     Doctor_T q=*(Doctor_T *)b;
     return strncmp(p->id_card,q->id_card,20);
