@@ -114,7 +114,7 @@ const char * Doctor_id_card(Doctor_T d){
     return d->id_card;
 }
 
-long long Doctor_reg_feet(Doctor_T d)
+long long Doctor_reg_fee(Doctor_T d)
 {
     ASSERT(d !=NULL,"不合法");
     return d->reg_fee;
@@ -196,7 +196,7 @@ int Doctor_cmp_id_card(const void *a, const void *b){
 int Doctor_cmp_reg_fee(const void *a, const void *b){
     Doctor_T p=*(Doctor_T *)a;
     Doctor_T q=*(Doctor_T *)b;
-    return strncmp(p->id_card,q->id_card,20);
+    return (p->reg_fee>q->reg_fee)-(p->reg_fee<q->reg_fee);
 }
 
 int Doctor_cmp_fuzzy(const void *a, const void *b){
