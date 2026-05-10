@@ -17,11 +17,11 @@ typedef enum {
 T Doctor_load(
     long long id,
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
-    const char* name, const char* phone, const char* id_card)
+    const char* name, const char* phone, const char* id_card, long long reg_fee)
 ;
 T Doctor_new(
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
-    const char* name, const char* phone, const char* id_card)
+    const char* name, const char* phone, const char* id_card, long long reg_fee)
 ;
 void Doctor_free(T* d);
 
@@ -36,7 +36,7 @@ DoctorTitle     Doctor_title(T d);
 const char*     Doctor_name(T d);
 const char*     Doctor_phone(T d);
 const char*     Doctor_id_card(T d);
-
+long long Doctor_reg_fee(T d);
 
 // 公开的重装载的数据包
 typedef struct {
@@ -48,6 +48,7 @@ typedef struct {
     char        name[32];
     char        phone[20];
     char        id_card[20];
+    long long   reg_fee;
 } Doctor_Update_Pack;
 // 重装载： 在校验数据合法性后，将所有数据进行覆盖
 Status Doctor_update(T d, const Doctor_Update_Pack *pack);
@@ -63,7 +64,7 @@ int Doctor_cmp_title(const void *a, const void *b);
 int Doctor_cmp_name(const void *a, const void *b);
 int Doctor_cmp_phone(const void *a, const void *b);
 int Doctor_cmp_id_card(const void *a, const void *b);
-
+int Doctor_cmp_reg_fee(const void *a, const void *b);
 
 /**
  * @brief 模糊姓名搜索器
