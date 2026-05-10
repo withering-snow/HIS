@@ -193,11 +193,6 @@ int Doctor_cmp_id_card(const void *a, const void *b){
     return strncmp(p->id_card,q->id_card,20);
 }
 
-int Doctor_cmp_reg_fee(const void *a, const void *b){
-    Doctor_T p=*(Doctor_T *)a;
-    Doctor_T q=*(Doctor_T *)b;
-    return strncmp(p->id_card,q->id_card,20);
-}
 
 int Doctor_cmp_reg_fee(const void *a, const void *b){
     Doctor_T p=*(Doctor_T *)a;
