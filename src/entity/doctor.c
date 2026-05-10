@@ -199,6 +199,12 @@ int Doctor_cmp_reg_fee(const void *a, const void *b){
     return (p->reg_fee>q->reg_fee)-(p->reg_fee<q->reg_fee);
 }
 
+int Doctor_cmp_reg_fee(const void *a, const void *b){
+    Doctor_T p=*(Doctor_T *)a;
+    Doctor_T q=*(Doctor_T *)b;
+    return (p->reg_fee > q->reg_fee)-(p->reg_fee > q->reg_fee);
+}
+
 int Doctor_cmp_fuzzy(const void *a, const void *b){
     Doctor_T p=*(Doctor_T *)a;
     if (strstr(p->name,b)!=NULL)
