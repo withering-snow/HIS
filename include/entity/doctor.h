@@ -36,7 +36,7 @@ DoctorTitle     Doctor_title(T d);
 const char*     Doctor_name(T d);
 const char*     Doctor_phone(T d);
 const char*     Doctor_id_card(T d);
-long long Doctor_reg_fee(T d);
+long long       Doctor_reg_fee(T d);
 
 // 公开的重装载的数据包
 typedef struct {
