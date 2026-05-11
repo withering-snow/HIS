@@ -3,6 +3,8 @@
 
 #include <base.h>
 
+#define INVALID_TIME (-1LL)
+
 /**
  * @brief 获取系统时间戳，用于存储
  * @return 当前系统时间戳
