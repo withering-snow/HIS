@@ -43,6 +43,7 @@ typedef enum {
     // Fund (财务) 业务相关
     HIS_ERR_INSUFFICIENT_FUNDS = -50,   // 余额不足
     HIS_ERR_PAYMENT_REQUIRED = -51,     // 未付款
+    HIS_ERR_INVALID_PAYMENT = -52,
 
     // 系统级/IO 错误
     HIS_ERR_IO_FAILURE = -60,               // io时发生错误
@@ -50,7 +51,14 @@ typedef enum {
 
     // 服务层级错误
     HIS_ERR_INSUFFICIENT_PERMISSION = -70,  // 当前账户权限不足
-    HIS_ERR_NO_USER = -71,                  // 没有登录的用户
+    HIS_ERR_NO_USER = -71,
+
+    //Account（账号）错误
+    HIS_ERR_PASSWORD_MISMATCH = -72,
+
+    //Record（记录）错误
+    HIS_ERR_STATUS_ERROR = -80,
+    HIS_ERR_INVALID_STATUS = -81,
 } Status;
 // ---------------- 状态码 ---------------- //
 
@@ -152,12 +160,13 @@ typedef int (*compare)(const void *a, const void *b);
 
 
 // 以下为对于实体的通用内部id工具
+#define INVALID_ID (-1LL)
 /**
  * @brief id生成器，基于当前静态变量 id_counter
  * 若已经达到上限，会返回-1
  */
 #define NEW_ID() \
-    ((_id_counter < LLONG_MAX)? (_id_counter++): -1)
+    ((_id_counter < LLONG_MAX)? (_id_counter++): INVALID_ID)
 
 /**
  * @brief 加载实体时，需要使用此函数用于记录当前最大id

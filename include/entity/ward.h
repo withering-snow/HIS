@@ -3,6 +3,10 @@
 
 #include <HIS_core.h>
 
+/* * * * * * * * * * * * * * *
+ * 再次声明，实体层不向外暴露结构体*
+ *    所有Xxxx_T均为对应指针    *
+ * * * * * * * * * * * * * * */
 #define T Ward_T
 typedef struct Ward_T *T;
 
@@ -25,15 +29,33 @@ typedef struct {
 /* ---------------- 主表 ---------------- */
 
 // 生命周期
+/**
+ * @brief               加载文件中的病房结构体
+ * @param id            病床id
+ * @param dept          部门枚举
+ * @param daily_cost    每日花费
+ * @return              返回加载完成的 Ward_T
+ */
 T Ward_load(
     long long id, Department dept, long long daily_cost)
-    // TODO: 这里没有提供bed_count,请置零，在后续床位加载进行累加
 ;
-// TODO :初始化病房：要按照起始病床号和床数顺序生成床
+/**
+ * @brief                   新建病房结构体，并创建好病房从表，按顺序排号
+ * @param dept              部门枚举
+ * @param daily_cost        每日花费
+ * @param start_bed_lable   起始的床号
+ * @param bed_count         病床数
+ * @return                  返回新建的 Ward_T
+ */
 T Ward_new(
     Department dept, long long daily_cost,
-    int start_bed_label, int bed_count)
+    int start_bed_lable, int bed_count)
 ;
+/**
+ * @brief       释放病房结构体并置空指针
+ * @param w     Ward_T 指针
+ * @note        注意是对 Ward_T 再次取地址
+ */
 void Ward_free(T* w);
 
 
@@ -65,17 +87,18 @@ int Ward_cmp_empty(const void* a, const void* b); // 找哪间房空位多
 
 Status Ward_bed_load(T w, int bed_label, long long pat_id, BedStatus status, long long start_ts);
 
-// 床位管理
+// 占用绑定
 Status Ward_occupy_bed(T w, int bed_label, long long pat_id);
-Status Ward_free_bed(T w, int bed_label);
 
+// 根据床号腾空
+Status Ward_vacate_by_bed(T w, int bed_label);
+// 根据病人腾空
+Status Ward_vacate_by_patient(T w, long long pat_id);
 
-
-// 腾空床位：根据病人 ID 自动找到床并释放
-Status Ward_release_bed(T w, long long pat_id);
-
-// 获取某个床位的具体信息
+// 根据床号获取明细
 Bed_T* Ward_get_bed(T w, int bed_label);
+// 根据病人获取明细
+Bed_T* Ward_get_bed_by_patient(T w, long long pat_id);
 
 /* ---------------- 从表 ---------------- */
 
