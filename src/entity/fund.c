@@ -1,6 +1,7 @@
 #include <fund.h>
 
 struct Fund_T {
+    // 8 bytes
     long long pat_id;
     long long balance;
 };

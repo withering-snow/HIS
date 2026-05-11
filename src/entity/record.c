@@ -3,11 +3,12 @@
 
 // 医疗记录实体
 struct Record_T {
-    RecordType      type;
-    bool            is_invalid; // 是否被废弃
+    // 8 types
     long long       actor_id;   // 行为主体id
     long long       time_stamp;
     long long       cost;
+
+    // union
     union {
         DataRegistration    reg;
         DataConsultation    cons;
@@ -20,6 +21,13 @@ struct Record_T {
         DataStackIn         s_in;//后两个actor_id为doc_id
         DataStackOut        s_out;
     }               detail;
+
+    // 4 bytes
+    RecordType      type;
+
+    // 1 byte
+    bool            is_invalid; // 是否被废弃
+
 };
 
 

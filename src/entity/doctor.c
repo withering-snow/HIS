@@ -1,19 +1,31 @@
 #include <doctor.h>
 
-static long long _id_counter=1;
+
+
+
+static long long _id_counter = 1;
+
+
 
 
 struct Doctor_T {
+    // 8 bytes
     long long   id;           // 内部id
-    gender      gender;       // 性别
     long long   birth_ts;     // 出生日期时间戳
-    bool        is_active;    // 出诊状态
+    long long   reg_fee;      // 挂号费用
+
+    // 4 bytes
+    gender      gender;       // 性别
     Department  dept;         // 科室
     DoctorTitle title;        // 职称
+
+    // char*
     char        name[32];     // 姓名
     char        phone[20];    // 手机号
     char        id_card[20];  // 身份证号
-    long long   reg_fee;      //挂号费用
+
+    // 1 byte
+    bool        is_active;    // 出诊状态
 };
 
 
@@ -23,21 +35,24 @@ struct Doctor_T {
 Doctor_T Doctor_load(
     long long id,
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
-    const char* name, const char* phone, const char* id_card, long long reg_fee){
-    Doctor_T d=safe_malloc(sizeof(struct Doctor_T));
+    const char* name, const char* phone, const char* id_card, long long reg_fee)
+{
+    Doctor_T d = safe_malloc(sizeof(struct Doctor_T));
     LOAD_ID(id);
-    d->id=id;
-    d->gender=gender;
-    d->birth_ts=birth_ts;
-    d->is_active=is_active;
-    d->dept=dept;
-    d->title=title;
-    strncpy(d->name,name,32);
-    strncpy(d->phone,phone,20);
-    strncpy(d->id_card,id_card,20);
+    d->id = id;
+    d->gender = gender;
+    d->birth_ts = birth_ts;
+    d->is_active = is_active;
+    d->dept = dept;
+    d->title = title;
+    strncpy(d->name, name, 32);
+    strncpy(d->phone, phone, 20);
+    strncpy(d->id_card, id_card, 20);
     d->reg_fee=reg_fee;
     return d;
 }
+
+
 Doctor_T Doctor_new(
     gender gender, long long birth_ts, bool is_active, Department dept, DoctorTitle title,
     const char* name, const char* phone, const char* id_card, long long reg_fee){
@@ -54,6 +69,7 @@ Doctor_T Doctor_new(
     d->reg_fee=reg_fee;
     return d;
 }
+
 
 void Doctor_free(Doctor_T* d){
     ASSERT(d !=NULL,"不合法");
@@ -124,10 +140,10 @@ long long Doctor_reg_fee(Doctor_T d)
 Status Doctor_update(Doctor_T d, const Doctor_Update_Pack *pack){
     ASSERT(d !=NULL,"不合法");
     ASSERT(pack !=NULL,"不合法");
-    d->gender=pack->gender;
-    d->birth_ts=pack->birth_ts;
-    d->is_active=pack->is_active;
-    d->dept=pack->dept;
+    d->gender = pack->gender;
+    d->birth_ts = pack->birth_ts;
+    d->is_active = pack->is_active;
+    d->dept = pack->dept;
     d->title=pack->title;
     strncpy(d->name,pack->name,32);
     strncpy(d->phone,pack->phone,20);

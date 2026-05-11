@@ -11,9 +11,14 @@ static long long _id_counter = 1;
 
 // Patient实体具体定义
 struct Patient_T {
+    // 8 bytes
     long long   id;         // 内部id
-    gender      gender;     // 性别
     long long   birth_ts;   // 出生日期时间戳
+
+    // 4 bytes
+    gender      gender;     // 性别
+
+    // char*
     char        name[32];   // 姓名
     char        phone[20];  // 电话号码
     char        id_card[20];// 身份证号

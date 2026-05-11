@@ -11,11 +11,16 @@ if(id > _next_bat_id) _next_bat_id = id; \
 }while(0)
 
 struct Medicine_T {
+    // 8 bytes
     long long   id;
     long long   cur_price;
-    int         total_remain;
-    char        name[32];
     List_T      batches;
+
+    // 4 bytes
+    int         total_remain;
+
+    // char*
+    char        name[32];
 };
 
 Medicine_T Medicine_load(

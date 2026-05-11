@@ -9,12 +9,15 @@ static long long _id_counter = 0;
 
 
 struct Ward_T {
+    // 8 bytes
     long long   id;
-    Department  dept;
     long long   daily_cost;
+    List_T      beds;
+
+    // 4 bytes
+    Department  dept;
     int         bed_count;
     int         empty_count;
-    List_T      beds;
 };
 
 
