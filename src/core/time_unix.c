@@ -27,6 +27,31 @@ int Time_to_int_date(long long ts) {
     return (t->tm_year + 1900) * 10000 + (t->tm_mon + 1) * 100 + t->tm_mday;
 }
 
+long long Int_date_to_time(int date) {
+    if (date < 19700101) return 0LL;
+
+    struct tm t;
+    memset(&t, 0, sizeof(struct tm));
+
+    int year  = date / 10000;
+    int month = (date % 10000) / 100;
+    int day   = date % 100;
+
+    t.tm_year = year - 1900;
+    t.tm_mon  = month - 1;
+    t.tm_mday = day;
+    t.tm_hour = 0;
+    t.tm_min  = 0;
+    t.tm_sec  = 0;
+    t.tm_isdst = -1;
+
+    time_t ts = mktime(&t);
+    if (ts == -1) {
+        return INVALID_TIME;
+    }
+    return (long long)ts;
+}
+
 int Time_CalculateAge(long long birth_ts) {
     if (birth_ts <= 0) return 0;
 
