@@ -58,8 +58,8 @@ typedef struct {
 // 入院详情
 typedef struct {
     long long   ward_id;
-    long long   bed_id;
     long long   deposit;        // 交纳的押金
+    int         bed_id;
 } DataAdmission;
 // 出院详情
 typedef struct{

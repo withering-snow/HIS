@@ -67,32 +67,49 @@ Status Serv_account_signup(
 
 
 Status Serv_account_signin(
-    AccountClass class, long long actor_id, const char *password){
-    List_T list = Data_get_account();
-    Account_T tmp = Account_load(class, actor_id, "tmp", "tmp");
-    Status status = HIS_ERR_NOT_FOUND;
+    const char* id_card, const char *password){
+    AccountClass class = CLASS_NO_USER;
 
+    long long actor_id = INVALID_ID;
 
-    void* find_ptr = List_first(list);
-    while(find_ptr != NULL){
+    if(id_card[0] == '0' && id_card[1] == '\0'){
+        class = CLASS_ROOT;
+        actor_id = 0;
+    }
+    else{
+        List_T pat_list = Data_get_patient(), doc_list = Data_get_doctor();
 
-        if( Account_cmp_actor_id(&tmp, find_ptr) == 0 &&
-            Account_cmp_class(&tmp, find_ptr) == 0){
-
-            status = Account_check_password(*(Account_T*)find_ptr, password);
-            if(status == HIS_OK){
-                _cur_account_info.class = class;
-                _cur_account_info.actor_id = actor_id;
-                strncpy(_cur_account_info.actor_name, Account_name(*(Account_T*)find_ptr), 32);
+        void* find_ptr = List_first(pat_list);
+        while(find_ptr != NULL){
+            Patient_T tmp = *(Patient_T*)find_ptr;
+            if(strncmp(Patient_id_card(tmp), id_card, 20) == 0){
+                class = CLASS_PATIENT;
+                actor_id = Patient_id(tmp);
+                break;
             }
-            break;
+            find_ptr = List_next(pat_list);
         }
 
-        find_ptr = List_next(list);
+        if(actor_id == INVALID_ID){
+            find_ptr = List_first(doc_list);
+            while(find_ptr != NULL){
+                Doctor_T tmp = *(Doctor_T*)find_ptr;
+                if(strncmp(Doctor_id_card(tmp), id_card, 20) == 0){
+                    class = CLASS_DOCTOR;
+                    actor_id = Doctor_id(tmp);
+                    break;
+                }
+                find_ptr = List_next(doc_list);
+            }
+        }
     }
 
-    Account_free(&tmp);
-    return status;
+    if(class == CLASS_NO_USER){
+        return HIS_ERR_NOT_FOUND;
+    }
+
+    Account_T acc = Serv_helper_finder(actor_id, TYPE_ACCOUNT);
+    return Account_check_password(acc, password);
 }
 
 Status Serv_account_signout(){

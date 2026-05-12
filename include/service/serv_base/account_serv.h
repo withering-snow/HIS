@@ -35,15 +35,14 @@ Status Serv_account_signup(
 
 /**
  * @brief                   登录
- * @param class             账号权限
- * @param actor_id          账号关联主体id
+ * @param id_card           身份证号或 root 的 0
  * @param password          密码
  * @return                  可能的异常：
  *                          HIS_ERR_NOT_FOUND
  *                          HIS_ERR_PASSWORD_MISMATCH
  */
 Status Serv_account_signin(
-    AccountClass class, long long actor_id, const char *password)
+    const char* id_card, const char *password)
 ;
 
 /**

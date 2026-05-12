@@ -209,3 +209,12 @@ List_T Serv_patient_queue_status() {
     return result_list;
 }
 #undef T
+
+long long Serv_patient_get_fund(){
+    long long pat_id = Serv_account_cur_id();
+    Fund_T fund = Serv_helper_finder(pat_id, TYPE_FUND);
+    if(fund == NULL){
+        return -1;
+    }
+    return Fund_balance(fund);
+}
