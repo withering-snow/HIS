@@ -219,12 +219,38 @@ static void clear_space() {                                         \
     int c;                                                          \
     while ((c = getchar()) != '\n' && c != EOF) ;                   \
 }                                                                   \
-static int get_input_int(const char* prompt, int min, int max) {    \
-    int val;                                                        \
+static void get_input_str(const char* prompt, char* dest, int max_len) { \
     while (1) {                                                     \
-        printf("%s (%d-%d): ", prompt, min, max);                   \
-        if (scanf("%d", &val) != 1 || val < min || val > max) {     \
-            printf("请输入位于区间[%d, %d]的合法数字\n", min, max);     \
+        printf("%s (限%d字符): ", prompt, max_len - 1);              \
+        if (fgets(dest, max_len, stdin) == NULL) continue;          \
+                                                                    \
+        size_t len = strlen(dest);                                  \
+        if (len > 0 && dest[len - 1] != '\n') {                     \
+            printf("错误：输入过长！请重新输入（最多%d字符）。\n", max_len - 1); \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0'; \
+                                                                    \
+        if (strchr(dest, '|')) {                                    \
+            printf("错误：输入包含非法字符 '|'，请重新输入。\n");      \
+            continue;                                               \
+        }                                                           \
+        if (strlen(dest) == 0) {                                    \
+            printf("错误：内容不能为空，请重新输入。\n");              \
+            continue;                                               \
+        }                                                           \
+                                                                    \
+        break;                                                      \
+    }                                                               \
+}                                                                   \
+static long long get_input_long_long(const char* prompt,            \
+    long long min, long long max) {                                 \
+    long long val;                                                  \
+    while (1) {                                                     \
+        printf("%s (%lld-%lld): ", prompt, min, max);               \
+        if (scanf("%lld", &val) != 1 || val < min || val > max) {   \
+            printf("请输入位于区间[%lld, %lld]的合法数字\n", min, max);  \
             clear_space();                                          \
             continue;                                               \
         }                                                           \
