@@ -54,16 +54,16 @@ List_T Serv_patient_records(long long pat_id){
 
 
 #define T ServSlotDataPackage
-T Serv_patient_get_slot_status(long long doc_id, int target_date, int time_frame) {
-    T pkg;
-    pkg.time_frame = time_frame;
-    pkg.registered = 0;
+T* Serv_patient_get_slot_status(long long doc_id, int target_date, int time_frame) {
+    T* pkg = safe_malloc(sizeof(T));
+    pkg->time_frame = time_frame;
+    pkg->registered = 0;
 
     if(time_frame == 0){
-        pkg.capacity = INT_MAX; // 急诊不限制
+        pkg->capacity = INT_MAX; // 急诊不限制
     }
     else{
-        pkg.capacity = 3; // 默认每个时段 3
+        pkg->capacity = 3; // 默认每个时段 3
     }
 
     List_T records = Data_get_record();
@@ -78,21 +78,22 @@ T Serv_patient_get_slot_status(long long doc_id, int target_date, int time_frame
                 data->target_date == target_date &&
                 data->time_frame == time_frame &&
                 data->status != COMPLETED) {
-                    pkg.registered++;
+                    pkg->registered++;
                 }
         }
         find_ptr = List_next(records);
     }
 
-    pkg.is_full = (pkg.registered >= pkg.capacity);
+    pkg->is_full = (pkg->registered >= pkg->capacity);
     return pkg;
 }
 List_T Serv_patient_day_slots(long long doc_id, int target_date) {
     List_T slot_list = List_new(sizeof(T));
 
     for (int i = 0; i < 17; i++){
-        T tmp = Serv_patient_get_slot_status(doc_id, target_date, i);
-        List_push_back(slot_list, &tmp);
+        T* tmp = Serv_patient_get_slot_status(doc_id, target_date, i);
+        List_push_back(slot_list, tmp);
+        Serv_helper_free_value(tmp);
     }
     return slot_list;
 }
@@ -100,12 +101,12 @@ List_T Serv_patient_day_slots(long long doc_id, int target_date) {
 
 Status Serv_patient_register(long long doc_id, int target_date, int time_frame){
 
-    T check = Serv_patient_get_slot_status(doc_id, target_date, time_frame);
-    if (check.is_full) {
+    T* check = Serv_patient_get_slot_status(doc_id, target_date, time_frame);
+    if (check->is_full) {
         return HIS_ERR_QUEUE_FULL;
     }
 
-    int new_seq = check.registered + 1;
+    int new_seq = check->registered + 1;
 
     Record_T r = Rec_reg_new(0, Serv_account_cur_id(), doc_id,
         new_seq, target_date, time_frame, APPOINTMENT);
@@ -114,6 +115,50 @@ Status Serv_patient_register(long long doc_id, int target_date, int time_frame){
 
     return HIS_OK;
 }
+
+Status Serv_patient_checkin(long long doc_id){
+
+    long long pat_id = Serv_account_cur_id();
+    int today = Time_to_int_date(Time_now());
+
+
+    Fund_T fund = (Fund_T)Serv_helper_finder(pat_id, TYPE_FUND);
+    if(fund == NULL){
+        return HIS_ERR_NO_FUNDS;
+    }
+
+    Doctor_T doctor = (Doctor_T)Serv_helper_finder(doc_id, TYPE_DOCTOR);
+
+    List_T record_list = Data_get_record();
+    void* rec_ptr = List_first(record_list);
+    while(rec_ptr != NULL){
+        Record_T record = *(Record_T*)rec_ptr;
+        if(Rec_is_invalid(record) == false &&
+            Rec_type(record) == REC_REGISTRATION &&
+            Rec_actor_id(record) == pat_id)
+        {
+            DataRegistration* data = (DataRegistration*)Rec_detail(record);
+            if(data->status == APPOINTMENT &&
+                data->target_date == today &&
+                data->doc_id == doc_id){
+                Status result = Fund_can_afford(fund, Doctor_reg_fee(doctor));
+                if(result != HIS_OK)
+                    return result;
+
+                Fund_deposit(fund, Doctor_reg_fee(doctor));
+                Rec_set_reg_status(record, WAITING);
+                if(Rel_queue_check_in(doc_id, pat_id) != HIS_OK){
+                    return HIS_ERR_ALREADY_EXISTS;
+                }
+                return HIS_OK;
+            }
+        }
+        rec_ptr = List_next(record_list);
+    }
+
+    return HIS_ERR_NOT_FOUND;
+}
+
 #undef T
 
 
@@ -129,7 +174,7 @@ List_T Serv_patient_queue_status() {
 
         Doctor_T doc = *(Doctor_T*)doc_ptr;
         long long doc_id = Doctor_id(doc);
-        List_T queue = Rel_queue_get_all(doc_id);
+        List_T queue = Rel_queue_get_waiting(doc_id);
         int pos = 1;
         int found_pos = -1;
         int total = List_size(queue);

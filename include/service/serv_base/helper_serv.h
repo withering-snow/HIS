@@ -73,11 +73,15 @@ typedef struct {
     int       total_waiting;   // 当前诊室总候诊人数
 } ServQueueStatusPackage;
 
-// 实体的类型（用于查找名字）
+// 实体的类型（用于查找指针）
 typedef enum{
-    TYPE_PATIENT,
+    TYPE_ACCOUNT,
     TYPE_DOCTOR,
-    TYPE_MEDICINE
+    TYPE_FUND,
+    TYPE_MEDICINE,
+    TYPE_PATIENT,
+    TYPE_RECORD,
+    TYPE_WARD
 }ServEntityType;
 
 
@@ -85,6 +89,8 @@ typedef enum{
 
 // =============================================================================
 // 辅助的函数
+
+const void* Serv_helper_finder(long long entity_id, ServEntityType type);
 
 /**
  * @brief       将id转换成指定实体的名字字符串，便于显示
@@ -102,23 +108,6 @@ const char* Serv_helper_time_frame_to_name(long long time_frame);
  * @return      返回对应的数据包指针，便于ui读取
  */
 ServRecordDataPackage* Serv_helper_record_to_pkg(Record_T r);
-
-
-
-
-// =============================================================================
-// 静态辅助数据
-static const char* record_type_names[] =
-    {"挂号", "看诊", "检查", "买药", "住院", "出院", "床位变动", "医生变动", "进货", "废弃"};
-static const char* time_frame_names[] =
-    {
-    "急诊",
-    "8:00-8:30", "8:30-9:00", "9:00-9:30", "9:30-10:00", "10:00-10:30", "10:30-11:00", "11:00-11:30", "11:30-12:00",
-    "13:00-13:30", "13:30-14:00", "14:00-14:30", "14:30-15:00", "15:00-15:30", "15:30-16:00", "16:00-16:30", "16:30-17:00",
-    "非法时段"
-    };
-static const char* registration_type_names[] =
-    {"预约", "候诊", "诊毕"};
 
 
 

@@ -40,7 +40,7 @@ Status Serv_account_signup(
  * @param password          密码
  * @return                  可能的异常：
  *                          HIS_ERR_NOT_FOUND
- *                          密码错误 TODO：（等待实体层合并）
+ *                          HIS_ERR_PASSWORD_MISMATCH
  */
 Status Serv_account_signin(
     AccountClass class, long long actor_id, const char *password)

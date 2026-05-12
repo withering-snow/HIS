@@ -28,7 +28,7 @@ List_T Serv_patient_records(long long pat_id);
  * @brief   获取指定医生时间段的挂号状态
  * @return  返回 ServSlotDataPackage ，注意释放
  */
-ServSlotDataPackage Serv_patient_get_slot_status(long long doc_id, int target_date, int time_frame);
+ServSlotDataPackage* Serv_patient_get_slot_status(long long doc_id, int target_date, int time_frame);
 
 /**
  * @brief 获取某医生某天的全时段挂号状态列表
@@ -38,14 +38,15 @@ List_T Serv_patient_day_slots(long long doc_id, int target_date);
 
 
 /**
- * @brief
+ * @brief 病人预约挂号
  * @param doc_id 医生id
  * @param target_date 挂号目标日期
  * @param time_frame 时间段索引
  * @return
  */
 Status Serv_patient_register(long long doc_id, int target_date, int time_frame);
-List_T Serv_patient_queue_count();
+Status Serv_patient_checkin(long long doc_id);
+List_T Serv_patient_queue_status();
 
 
 #endif //HIS_PATIENT_SERV_H

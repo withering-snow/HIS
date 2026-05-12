@@ -1,10 +1,13 @@
 #include <rel_ctrl.h>
 
+// 两个静态的关系表
 static List_T Rel_doc_list = NULL;
 static List_T Rel_ward_list = NULL;
 
+// 三个挂号相关的动态队列与表
 static List_T Rel_appoint_queue = NULL;
 static List_T Rel_waiting_queue = NULL;
+static List_T Rel_doc_seeing_list = NULL;
 
 
 
@@ -36,6 +39,10 @@ static void __queue_free(){
             tmp = List_next(Rel_waiting_queue);
         }
         List_free(& Rel_waiting_queue);
+    }
+
+    if (Rel_doc_seeing_list != NULL){
+        List_free(& Rel_doc_seeing_list);
     }
 }
 
@@ -287,8 +294,11 @@ Status Rel_queue_remove(long long doc_id, long long pat_id){
 
 
 
-long long Rel_queue_call(long long doc_id){
+Status Rel_queue_call_reg(long long doc_id){
     Rel_queue* tmp = List_first(Rel_waiting_queue);
+    if(Rel_queue_cur_pat(doc_id) != INVALID_ID){
+        return HIS_ERR_ALREADY_EXISTS;
+    }
 
     while(tmp != NULL){
         if(tmp->doc_id == doc_id){
@@ -296,13 +306,40 @@ long long Rel_queue_call(long long doc_id){
             if(node != NULL){
                 long long pat_id = node->pat_id;
                 List_remove(tmp->queue, node);
-                return pat_id;
+                Rel_doc rel_tmp = {pat_id, doc_id};
+                List_push_back(Rel_doc_seeing_list, &rel_tmp);
+                return HIS_OK;
             }
             break;
         }
         tmp = List_next(Rel_waiting_queue);
     }
+    return HIS_ERR_NOT_FOUND;
+}
+
+
+long long Rel_queue_cur_pat(long long doc_id){
+    Rel_doc* find_ptr = List_first(Rel_doc_seeing_list);
+    while(find_ptr != NULL){
+        if(find_ptr->doc_id == doc_id){
+            return find_ptr->pat_id;
+        }
+        find_ptr = List_next(Rel_doc_seeing_list);
+    }
     return INVALID_ID;
+}
+
+
+Status Rel_queue_end_reg(long long doc_id){
+    Rel_doc* find_ptr = List_first(Rel_doc_seeing_list);
+    while(find_ptr != NULL){
+        if(find_ptr->doc_id == doc_id){
+            List_remove(Rel_doc_seeing_list, find_ptr);
+            return HIS_OK;
+        }
+        find_ptr = List_next(Rel_doc_seeing_list);
+    }
+    return HIS_ERR_NOT_FOUND;
 }
 
 
@@ -387,6 +424,7 @@ void Rel_queue_update(){
     __queue_free();
     Rel_waiting_queue = List_new(sizeof(Rel_queue));
     Rel_appoint_queue = List_new(sizeof(Rel_queue));
+    Rel_doc_seeing_list = List_new(sizeof(Rel_doc));
 
     List_T records = Data_get_record();
     int today = Time_to_int_date(Time_now());
@@ -407,6 +445,10 @@ void Rel_queue_update(){
                 case WAITING:
                     Rel_waiting_queue_push(data->doc_id, Rec_actor_id(record),
                         data->sequence_no, data->time_frame);
+                    break;
+                case IN_PROGRESS:
+                    Rel_doc rel_tmp = {Rec_actor_id(record), data->doc_id};
+                    List_push_back(Rel_doc_seeing_list, &rel_tmp);
                     break;
                 default:
                     break;

@@ -27,6 +27,7 @@ typedef enum {
 typedef enum{
     APPOINTMENT,      // 预约
     WAITING,          // 候诊
+    IN_PROGRESS,      // 就诊
     COMPLETED         // 诊毕
 }RegistrationStatus;  // 挂号状态
 typedef struct {

@@ -74,16 +74,16 @@ Record_T Rec_cons_new(long long cost, long long pat_id, long long doc_id,
     DataConsultation data = {.doc_id = doc_id};
     strncpy(data.diagnosis, diagnosis, 127);
     strncpy(data.advice, advice, 127);
-    data.diagnosis[127] = 0;
-    data.advice[127] = 0;
+    data.diagnosis[127] = '\0';
+    data.advice[127] = '\0';
     return Rec_load(REC_CONSULTATION, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
 }
 
 Record_T Rec_exam_new(long long cost, long long pat_id, long long doc_id, const char* exam_name) {
     DataExamination data = {.doc_id = doc_id};
-    strncpy(data.exam_name, exam_name, 127);
-    data.exam_name[127] = 0;
+    strncpy(data.exam_name, exam_name, 63);
+    data.exam_name[63] = '\0';
     return Rec_load(REC_EXAMINATION, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
 }
@@ -124,6 +124,35 @@ Record_T Rec_c_doc_new(long long cost, long long pat_id, long long old_doc_id, l
     DataChangeDoc data = {.old_doc_id = old_doc_id, .new_doc_id = new_doc_id};
     return Rec_load(REC_CHANGE_DOC, false, pat_id, Time_now(), cost, &data, sizeof(data));
 }
+
+Record_T Rec_s_in_new(long long cost, long long admin_id, long long med_id, long long batch_id, long long buy_price,
+    long long expire_ts, int total, const char *batch_no){
+    DataStackIn data = {
+        .batch_id = batch_id,
+        .buy_price = buy_price,
+        .expire_ts = expire_ts,
+        .med_id = med_id,
+        .total = total
+    };
+    strncpy(data.batch_no, batch_no, 31);
+    data.batch_no[31] = '\0';
+    return Rec_load(REC_STOCK_IN, false,
+        admin_id, Time_now(), cost, &data, sizeof(data));
+}
+
+Record_T Rec_s_out_new(long long cost, long long admin_id, long long med_id, long long batch_id, int total,
+    const char *batch_no){
+    DataStackOut data = {
+        .batch_id = batch_id,
+        .med_id = med_id,
+        .total = total
+    };
+    strncpy(data.batch_no, batch_no, 31);
+    data.batch_no[31] = '\0';
+    return Rec_load(REC_STOCK_OUT, false,
+        admin_id, Time_now(), cost, &data, sizeof(data));
+}
+
 void Rec_free(Record_T* r){
     ASSERT((r !=NULL),"不合法");
     free(*r);

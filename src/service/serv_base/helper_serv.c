@@ -3,6 +3,54 @@
 
 
 
+// =============================================================================
+// 静态辅助数据
+static const char* record_type_names[] =
+{"挂号", "看诊", "检查", "买药", "住院", "出院", "床位变动", "医生变动", "进货", "废弃"};
+static const char* time_frame_names[] =
+{
+    "急诊",
+    "8:00-8:30", "8:30-9:00", "9:00-9:30", "9:30-10:00", "10:00-10:30", "10:30-11:00", "11:00-11:30", "11:30-12:00",
+    "13:00-13:30", "13:30-14:00", "14:00-14:30", "14:30-15:00", "15:00-15:30", "15:30-16:00", "16:00-16:30", "16:30-17:00",
+    "非法时段"
+    };
+static const char* registration_type_names[] =
+{"预约", "候诊", "诊毕"};
+
+
+const void * Serv_helper_finder(long long entity_id, ServEntityType type){
+    List_T list = NULL;
+    switch(type){
+        case TYPE_ACCOUNT:  list = Data_get_account();  break;
+        case TYPE_DOCTOR:   list = Data_get_doctor();   break;
+        case TYPE_FUND:     list = Data_get_fund();     break;
+        case TYPE_MEDICINE: list = Data_get_medicine(); break;
+        case TYPE_PATIENT:  list = Data_get_patient();  break;
+        case TYPE_RECORD:   list = Data_get_record();   break;
+        case TYPE_WARD:     list = Data_get_ward();     break;
+    }
+
+    void* find_ptr = List_first(list);
+    long long find_id = INVALID_ID;
+    while(find_ptr != NULL){
+        switch(type){
+            case TYPE_ACCOUNT:  find_id = Account_id(*(Account_T*)find_ptr); break;
+            case TYPE_DOCTOR:   find_id = Doctor_id(*(Doctor_T*)find_ptr);  break;
+            case TYPE_FUND:     find_id = Fund_pat_id(*(Fund_T*)find_ptr); break;
+            case TYPE_MEDICINE: find_id = Medicine_id(*(Medicine_T*)find_ptr); break;
+            case TYPE_PATIENT:  find_id = Patient_id(*(Patient_T*)find_ptr); break;
+            case TYPE_RECORD:   find_id = Rec_actor_id(*(Record_T*)find_ptr); break;
+            case TYPE_WARD:     find_id = Ward_id(*(Ward_T*)find_ptr); break;
+        }
+        if(find_id == entity_id){
+            return *(void**)find_ptr;
+        }
+        find_ptr = List_next(list);
+    }
+    return NULL;
+}
+
+
 const char* Serv_helper_id_to_name(long long id, ServEntityType type){
     if(id == 0){
         return "root";

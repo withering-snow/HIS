@@ -150,9 +150,19 @@ Status Rel_waiting_queue_push(long long doc_id, long long pat_id, int sequence_n
 Status Rel_queue_remove(long long doc_id, long long pat_id);
 
 /**
- * @brief  医生叫号：弹出下一位应当就诊的病人
+ * @brief  医生叫号：绑定下一位应当就诊的病人
  */
-long long Rel_queue_call(long long doc_id);
+Status Rel_queue_call_reg(long long doc_id);
+
+/**
+ * @brief  获取当前看诊的病人id
+ */
+long long Rel_queue_cur_pat(long long doc_id);
+
+/**
+ * @brief  看诊结束：将临时看诊关系解绑
+ */
+Status Rel_queue_end_reg(long long doc_id);
 
 /**
  * @brief  病人签到：将预约病人推入候诊队列
