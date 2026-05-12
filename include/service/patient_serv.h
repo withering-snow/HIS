@@ -38,15 +38,37 @@ List_T Serv_patient_day_slots(long long doc_id, int target_date);
 
 
 /**
- * @brief 病人预约挂号
- * @param doc_id 医生id
- * @param target_date 挂号目标日期
- * @param time_frame 时间段索引
- * @return
+ * @brief               病人预约挂号
+ * @param doc_id        医生id
+ * @param target_date   挂号目标日期
+ * @param time_frame    时间段索引
+ * @return              可能的异常
+ *                      HIS_ERR_QUEUE_FULL
  */
 Status Serv_patient_register(long long doc_id, int target_date, int time_frame);
+
+/**
+ * @brief           病人签到，进入等待队列（以当前登录账户为准）
+ * @param doc_id    签到的医生 id
+ * @return          可能的异常
+ *                  HIS_ERR_NO_FUNDS
+ *                  HIS_ERR_INSUFFICIENT_FUNDS
+ *                  HIS_ERR_ALREADY_EXISTS
+ *                  HIS_ERR_NOT_FOUND
+ */
 Status Serv_patient_checkin(long long doc_id);
+
+/**
+ * @brief   获取患者排队状态链表，内部存储 ServQueueStatusPackage
+ * @return  链表，注意释放
+ */
 List_T Serv_patient_queue_status();
+
+/**
+ * @brief  获取患者账户余额
+ * @return 患者余额，不存在账户则返回 -1
+ */
+long long Serv_patient_get_fund();
 
 
 #endif //HIS_PATIENT_SERV_H
