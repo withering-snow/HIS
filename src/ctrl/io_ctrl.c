@@ -649,3 +649,125 @@ static Status Io_load_record()
     fclose(fp);
     return HIS_OK;
 }
+
+static Status Io_save_doctor_relation()
+{
+    char dir[32];
+    snprintf(dir, sizeof(dir), "data%cDoctor-relation.txt", SEP);
+
+    FILE *fp = fopen(dir, "r");
+    if (fp == NULL){
+        return HIS_ERR_IO_FAILURE;
+    }
+    fprintf(fp,"Pat_id|Doc_id\n");
+    List_T List_rel_doc = __tmp_list();  //TODO:
+    Rel_doc* rel_doc_ptr = List_first(List_rel_doc);
+    while (rel_doc_ptr != NULL)
+    {
+        fprintf(fp, "%lld|%lld\n",
+            rel_doc_ptr->pat_id, rel_doc_ptr->doc_id);
+        rel_doc_ptr = List_next(List_rel_doc);
+    }
+    fclose(fp);
+    return HIS_OK;
+}
+
+static Status Io_load_doctor_relation()
+{
+    char dir[32];
+    snprintf(dir, sizeof(dir), "data%cWard-relation.txt", SEP);
+
+    FILE *fp = fopen(dir, "r");
+    if (fp == NULL){
+        return HIS_ERR_IO_FAILURE;
+    }
+    char dummy[256];
+    fgets(dummy,sizeof(dummy),fp);
+    long long pat_id;  long long doc_id;
+
+    while (fscanf(fp,"%lld|%lld\n", &pat_id, &doc_id)
+        == 2)
+    {
+        Rel_bind_doctor(pat_id,doc_id);
+    }
+    fclose(fp);
+    return HIS_OK;
+}
+
+
+static Status Io_save_ward_relation()
+{
+    char dir[32];
+    snprintf(dir, sizeof(dir), "data%cWard-relation.txt", SEP);
+
+    FILE *fp = fopen(dir, "r");
+    if (fp == NULL){
+        return HIS_ERR_IO_FAILURE;
+    }
+    fprintf(fp,"Pat_id|Ward_id\n");
+    List_T List_rel_ward = __tmp_list();//TODO:
+    Rel_ward* rel_ward_ptr= List_first(List_rel_ward);
+    while (rel_ward_ptr != NULL)
+    {
+        fprintf(fp, "%lld|%lld\n",
+            rel_ward_ptr->pat_id, rel_ward_ptr->ward_id);
+        rel_ward_ptr = List_next(List_rel_ward);
+    }
+    fclose(fp);
+    return HIS_OK;
+}
+
+static Status Io_load_ward_relation()
+{
+    char dir[32];
+    snprintf(dir, sizeof(dir), "data%cWard-relation.txt", SEP);
+
+    FILE *fp = fopen(dir, "r");
+    if (fp == NULL){
+        return HIS_ERR_IO_FAILURE;
+    }
+    char dummy[256];
+    fgets(dummy,sizeof(dummy),fp);
+    long long pat_id;  long long ward_id;
+
+    while (fscanf(fp,"%lld|%lld\n", &pat_id, &ward_id)
+        == 2)
+    {
+        Rel_bind_ward(pat_id,ward_id);
+    }
+    fclose(fp);
+    return HIS_OK;
+}
+
+Status Io_save()
+{
+    static Status Io_save_patient();
+    static Status Io_save_doctor();
+    static Status Io_save_fund();
+    static Status Io_save_medicine();
+    static Status Io_save_account();
+    static Status Io_save_ward();
+    static Status Io_save_record();
+    static Status Io_save_doctor_relation();
+    static Status Io_save_ward_relation();
+}
+
+Status Io_load()
+{
+    static Status Io_load_patient();
+    static Status Io_load_doctor();
+    static Status Io_load_fund();
+    static Status Io_load_medicine();
+    static Status Io_load_account();
+    static Status Io_load_ward();
+    static Status Io_load_record();
+    static Status Io_load_doctor_relation();
+    static Status Io_load_ward_relation();
+
+}
+
+
+
+
+
+
