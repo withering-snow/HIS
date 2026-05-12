@@ -12,6 +12,21 @@ const char* Time_to_string(long long time_stamp) {
     return buf;
 }
 
+const char * Time_to_string_date(long long time_stamp){
+    static char buf[64];
+    time_t t = (time_t)time_stamp;
+    struct tm *tm_tar = localtime(&t);
+    strftime(buf, sizeof(buf), "%Y-%m-%d", tm_tar);
+    return buf;
+}
+
+int Time_to_int_date(long long ts) {
+    time_t raw_time = (time_t)ts;
+    struct tm *t = localtime(&raw_time);
+    if (!t) return 0;
+    return (t->tm_year + 1900) * 10000 + (t->tm_mon + 1) * 100 + t->tm_mday;
+}
+
 int Time_CalculateAge(long long birth_ts) {
     if (birth_ts <= 0) return 0;
 

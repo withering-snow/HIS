@@ -75,6 +75,13 @@ void *List_next(T l);
  */
 void List_sort(T l, compare cmp);
 
+
+/*
+ * 为了便于挂号的队列实现，于此增加两个辅助函数
+ */
+int List_pop_front(T l, void *out_data);
+void List_insert_before_cursor(List_T l, const void *data);
+
 #undef T
 
 #endif

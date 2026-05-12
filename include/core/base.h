@@ -20,33 +20,45 @@
 // ---------------- 状态码 ---------------- //
 typedef enum {
     // 基础状态
-    HIS_OK = 0,
-    HIS_ERR_NO_MEM = -1,
-    HIS_ERR_INVALID_ARG = -2,
+    HIS_OK = 0,                     // 正常运行
+    HIS_ERR_NO_MEM = -1,            // 内存耗尽
+    HIS_ERR_INVALID_ARG = -2,       // 传入参数非法
 
     // 通用搜索错误
-    HIS_ERR_NOT_FOUND = -10,
-    HIS_ERR_ALREADY_EXISTS = -11,
+    HIS_ERR_NOT_FOUND = -10,        // 成员不存在
+    HIS_ERR_ALREADY_EXISTS = -11,   // 成员已存在（防止反复创建）
 
     // Patient/Doctor 业务相关
-    HIS_ERR_INVALID_ID = -20,
+    HIS_ERR_INVALID_ID = -20,       // ID 非法
 
     // Ward (病房) 业务相关
-    HIS_ERR_WARD_FULL = -30,
-    HIS_ERR_BED_OCCUPIED = -31,
-    HIS_ERR_PATIENT_NOT_IN_WARD = -32,
+    HIS_ERR_WARD_FULL = -30,            // 病房已满
+    HIS_ERR_BED_OCCUPIED = -31,         // 病床被占用
+    HIS_ERR_PATIENT_NOT_IN_WARD = -32,  // 病人不在此病房
 
     // Medicine (药品) 业务相关
-    HIS_ERR_OUT_OF_STOCK = -40,
-    HIS_ERR_INVALID_DOSAGE = -41,
+    HIS_ERR_OUT_OF_STOCK = -40,     // 药品无库存
+    HIS_ERR_INVALID_DOSAGE = -41,   // 剂量非法
 
     // Fund (财务) 业务相关
-    HIS_ERR_INSUFFICIENT_FUNDS = -50,
-    HIS_ERR_PAYMENT_REQUIRED = -51,
+    HIS_ERR_INSUFFICIENT_FUNDS = -50,   // 余额不足
+    HIS_ERR_PAYMENT_REQUIRED = -51,     // 未付款
+    HIS_ERR_INVALID_PAYMENT = -52,
 
     // 系统级/IO 错误
-    HIS_ERR_IO_FAILURE = -60,
-    HIS_ERR_FILE_CORRUPT = -61
+    HIS_ERR_IO_FAILURE = -60,               // io时发生错误
+    HIS_ERR_FILE_CORRUPT = -61,             // 文件损坏或格式不正确
+
+    // 服务层级错误
+    HIS_ERR_INSUFFICIENT_PERMISSION = -70,  // 当前账户权限不足
+    HIS_ERR_NO_USER = -71,
+
+    //Account（账号）错误
+    HIS_ERR_PASSWORD_MISMATCH = -72,
+
+    //Record（记录）错误
+    HIS_ERR_STATUS_ERROR = -80,
+    HIS_ERR_INVALID_STATUS = -81,
 } Status;
 // ---------------- 状态码 ---------------- //
 
@@ -148,12 +160,13 @@ typedef int (*compare)(const void *a, const void *b);
 
 
 // 以下为对于实体的通用内部id工具
+#define INVALID_ID (-1LL)
 /**
  * @brief id生成器，基于当前静态变量 id_counter
  * 若已经达到上限，会返回-1
  */
 #define NEW_ID() \
-    ((_id_counter < LLONG_MAX)? (_id_counter++): -1)
+    ((_id_counter < LLONG_MAX)? (_id_counter++): INVALID_ID)
 
 /**
  * @brief 加载实体时，需要使用此函数用于记录当前最大id
