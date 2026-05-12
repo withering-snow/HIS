@@ -741,28 +741,28 @@ static Status Io_load_ward_relation()
 
 Status Io_save()
 {
-    static Status Io_save_patient();
-    static Status Io_save_doctor();
-    static Status Io_save_fund();
-    static Status Io_save_medicine();
-    static Status Io_save_account();
-    static Status Io_save_ward();
-    static Status Io_save_record();
-    static Status Io_save_doctor_relation();
-    static Status Io_save_ward_relation();
+    Status Io_save_patient();
+    Status Io_save_doctor();
+    Status Io_save_fund();
+    Status Io_save_medicine();
+    Status Io_save_account();
+    Status Io_save_ward();
+    Status Io_save_record();
+    Status Io_save_doctor_relation();
+    Status Io_save_ward_relation();
 }
 
 Status Io_load()
 {
-    static Status Io_load_patient();
-    static Status Io_load_doctor();
-    static Status Io_load_fund();
-    static Status Io_load_medicine();
-    static Status Io_load_account();
-    static Status Io_load_ward();
-    static Status Io_load_record();
-    static Status Io_load_doctor_relation();
-    static Status Io_load_ward_relation();
+    Status Io_load_patient();
+    Status Io_load_doctor();
+    Status Io_load_fund();
+    Status Io_load_medicine();
+    Status Io_load_account();
+    Status Io_load_ward();
+    Status Io_load_record();
+    Status Io_load_doctor_relation();
+    Status Io_load_ward_relation();
 
 }
 
