@@ -93,6 +93,11 @@ int Ward_empty_count(Ward_T w){
     return w->empty_count;
 }
 
+List_T Ward_beds(Ward_T w){
+    ASSERT(w!=NULL, "空指针访问");
+    return w->beds;
+}
+
 
 
 

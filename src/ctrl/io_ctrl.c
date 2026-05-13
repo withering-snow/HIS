@@ -75,16 +75,16 @@ static Status Io_save_doctor()
     {
         return HIS_ERR_IO_FAILURE;
     }
-    fprintf(fp,"ID|Gender|Birth_TS|Is_Active|Debt|Title|Name|Phone|ID_Card\n");
+    fprintf(fp,"ID|Gender|Birth_TS|Is_Active|Debt|Title|Name|Phone|ID_Card|Reg_Fee\n");
     List_T List_doctor = Data_get_doctor();
     void* doc_ptr = List_first(List_doctor);
     while (doc_ptr != NULL)
     {
         Doctor_T doc = *(Doctor_T *)doc_ptr;
-        fprintf(fp, "%lld|%d|%lld|%d|%d|%d|%s|%s|%s\n",
+        fprintf(fp, "%lld|%d|%lld|%d|%d|%d|%s|%s|%s|%lld\n",
             Doctor_id(doc), Doctor_gender(doc), Doctor_birth_ts(doc),
             Doctor_is_active(doc), Doctor_dept(doc), Doctor_title(doc), Doctor_name(doc),
-            Doctor_phone(doc), Doctor_id_card(doc));
+            Doctor_phone(doc), Doctor_id_card(doc), Doctor_reg_fee(doc));
         doc_ptr = List_next(List_doctor);
     }
     fclose(fp);
@@ -110,15 +110,15 @@ static Status Io_load_doctor()
     long long   id;             gender      gender;           long long   birth_ts;
     int         is_active_int;  bool        is_active;        Department  dept;
     DoctorTitle title;          char        name[32];
-    char        phone[20];      char        id_card[20];
+    char        phone[20];      char        id_card[20];      long long   reg_fee;
 
     while (
-        fscanf(fp, "%lld|%d|%lld|%d|%d|%d|%31[^|]|%19[^|]|%19[^|]\n",
-            &id, &gender, &birth_ts, &is_active_int, &dept, &title, name, phone, id_card)
-            == 9)
+        fscanf(fp, "%lld|%d|%lld|%d|%d|%d|%31[^|]|%19[^|]|%19[^|]|%lld\n",
+            &id, &gender, &birth_ts, &is_active_int, &dept, &title, name, phone, id_card, &reg_fee)
+            == 10)
     {
         is_active = (bool)is_active_int;
-        Doctor_T doc = Doctor_load(id, gender, birth_ts, is_active, dept, title, name, phone, id_card);
+        Doctor_T doc = Doctor_load(id, gender, birth_ts, is_active, dept, title, name, phone, id_card, reg_fee);
         List_push_back(List_doctor, &doc);
     }
 
@@ -202,7 +202,7 @@ static Status Io_save_medicine()
         Medicine_total_remain(med),Medicine_name(med));
 
 
-        List_T List_batch = __tmp_list(); // TODO: med
+        List_T List_batch = Medicine_batches(med);
         void* bat_ptr = List_first(List_batch);
 
         while (bat_ptr != NULL)
@@ -268,7 +268,7 @@ static Status Io_load_medicine()
                 &bat.remain,
                 &bat.status,
                 bat.batch_no);
-            List_push_back(__tmp_list(), &bat); // TODO: recent_med
+            List_push_back(Medicine_batches(recent_med), &bat);
         }
     }
     fclose(fp);
@@ -366,7 +366,7 @@ static Status Io_save_ward()
         Ward_daily_cost(ward),Ward_bed_count(ward),Ward_empty_count(ward));
 
 
-        List_T List_bed = __tmp_list(); // TODO: ward
+        List_T List_bed = Ward_beds(ward);
         void* bed_ptr = List_first(List_bed);
 
         while (bed_ptr != NULL)
@@ -432,6 +432,7 @@ static Status Io_load_ward()
                 &bed.pat_id,
                 &bed.status,
                 &bed.start_ts);
+            List_push_back(Ward_beds(recent_ward), &bed);
         }
     }
     fclose(fp);
@@ -456,7 +457,7 @@ static Status Io_save_record()
     while (rec_ptr != NULL)
     {
         Record_T rec = *(Record_T *)rec_ptr;
-        fprintf(fp,"%d|%d|%lld|%lld|%lld\n",Rec_type(rec),Rec_is_invalid(rec),Rec_actor_id(rec),Rec_time_stamp(rec),Rec_cost(rec));
+        fprintf(fp,"%d|%d|%lld|%lld|%lld|",Rec_type(rec),Rec_is_invalid(rec),Rec_actor_id(rec),Rec_time_stamp(rec),Rec_cost(rec));
         switch (Rec_type(rec))
         {
         case REC_REGISTRATION:
@@ -549,7 +550,7 @@ static Status Io_load_record()
     long long       time_stamp;
     long long       cost;
 
-    while (fscanf(fp,"%d|%d|%lld|%lld|%lld\n",
+    while (fscanf(fp,"%d|%d|%lld|%lld|%lld|",
         &type,&is_invalid_int, &actor_id,&time_stamp,&cost)
         == 5)
     {
@@ -650,12 +651,15 @@ static Status Io_load_record()
     return HIS_OK;
 }
 
+
+
+
 static Status Io_save_doctor_relation()
 {
     char dir[32];
     snprintf(dir, sizeof(dir), "data%cDoctor-relation.txt", SEP);
 
-    FILE *fp = fopen(dir, "r");
+    FILE *fp = fopen(dir, "w");
     if (fp == NULL){
         return HIS_ERR_IO_FAILURE;
     }
@@ -672,10 +676,11 @@ static Status Io_save_doctor_relation()
     return HIS_OK;
 }
 
+
 static Status Io_load_doctor_relation()
 {
     char dir[32];
-    snprintf(dir, sizeof(dir), "data%cWard-relation.txt", SEP);
+    snprintf(dir, sizeof(dir), "data%cDoctor-relation.txt", SEP);
 
     FILE *fp = fopen(dir, "r");
     if (fp == NULL){
@@ -695,12 +700,14 @@ static Status Io_load_doctor_relation()
 }
 
 
+
+
 static Status Io_save_ward_relation()
 {
     char dir[32];
     snprintf(dir, sizeof(dir), "data%cWard-relation.txt", SEP);
 
-    FILE *fp = fopen(dir, "r");
+    FILE *fp = fopen(dir, "w");
     if (fp == NULL){
         return HIS_ERR_IO_FAILURE;
     }
@@ -716,6 +723,7 @@ static Status Io_save_ward_relation()
     fclose(fp);
     return HIS_OK;
 }
+
 
 static Status Io_load_ward_relation()
 {
@@ -739,35 +747,72 @@ static Status Io_load_ward_relation()
     return HIS_OK;
 }
 
+
+
+
 Status Io_save()
 {
-    Status Io_save_patient();
-    Status Io_save_doctor();
-    Status Io_save_fund();
-    Status Io_save_medicine();
-    Status Io_save_account();
-    Status Io_save_ward();
-    Status Io_save_record();
-    Status Io_save_doctor_relation();
-    Status Io_save_ward_relation();
+    Status s;
+    if((s = Io_save_patient()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_doctor()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_fund()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_medicine()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_account()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_ward()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_record()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_doctor_relation()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_save_ward_relation()) != HIS_OK){
+        return s;
+    }
+    return HIS_OK;
 }
+
 
 Status Io_load()
 {
-    Status Io_load_patient();
-    Status Io_load_doctor();
-    Status Io_load_fund();
-    Status Io_load_medicine();
-    Status Io_load_account();
-    Status Io_load_ward();
-    Status Io_load_record();
-    Status Io_load_doctor_relation();
-    Status Io_load_ward_relation();
-
+    Status s;
+    if((s = Io_load_patient()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_doctor()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_fund()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_medicine()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_account()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_ward()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_record()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_doctor_relation()) != HIS_OK){
+        return s;
+    }
+    if((s = Io_load_ward_relation()) != HIS_OK){
+        return s;
+    }
+    return HIS_OK;
 }
-
-
-
-
-
-
