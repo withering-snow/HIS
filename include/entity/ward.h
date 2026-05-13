@@ -65,6 +65,7 @@ Department  Ward_dept(T w);
 long long   Ward_daily_cost(T w);
 int         Ward_bed_count(T w); // 返回该病房总床位数
 int         Ward_empty_count(T w); // 返回可用病床数
+List_T      Ward_beds(T w);
 
 // 公开的重装载的数据包
 typedef struct {
