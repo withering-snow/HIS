@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <time.h>
+#include <stdarg.h>
 // ---------------- 可能使用的库 ---------------- //
 
 

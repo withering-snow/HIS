@@ -30,7 +30,7 @@ Status Serv_account_init();
  */
 Status Serv_account_signup(
     AccountClass class, long long actor_id,
-    const char* name, const char* password)
+    const char* name, const char* password, ...)
 ;
 
 /**

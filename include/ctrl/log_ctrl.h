@@ -3,7 +3,6 @@
 
 #include <HIS_core.h>
 #include <HIS_entity.h>
-#include <stdarg.h>
 
 void Log_open();
 void Log_close();

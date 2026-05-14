@@ -4,8 +4,6 @@ load_ui_tools
 
 // =============================
 // ====临时函数
-extern Status IO_load();
-extern Status IO_save();
 extern Status UI_pat_menu();
 extern Status UI_doc_menu();
 extern Status UI_root_menu();
@@ -19,7 +17,7 @@ Status UI_main(){
 
         Data_init();
         Rel_init();
-        IO_load();
+        Io_load();
         Rel_queue_update();
 
         CLEAN();
@@ -64,7 +62,7 @@ Status UI_main(){
                         get_input_str("姓名：\n", name, 32);
                         get_input_str("联系电话：\n", phone, 20);
 
-                            Patient_T pat = Patient_new(g, Int_date_to_time(birth), name, phone, id_buf);
+                        Patient_T pat = Patient_new(g, Int_date_to_time(birth), name, phone, id_buf);
                         List_push_back(Data_get_patient(), &pat);
 
                         Fund_T fund = Fund_new(Patient_id(pat));
@@ -72,7 +70,7 @@ Status UI_main(){
 
                         Serv_account_signup(CLASS_PATIENT, Patient_id(pat), name, NULL);
 
-                        IO_save();
+                        Io_save();
                         printf("账户创建成功！按任意键返回……");
                         getchar();
                         CLEAN();
@@ -82,27 +80,29 @@ Status UI_main(){
                 case HIS_ERR_PASSWORD_MISMATCH:
                     printf("密码错误！\n");
                     break;
+
                 case HIS_OK:
                     printf("登录成功！");
                     has_logged = true;
                     break;
+
                 }
             }
         }
 
         switch(Serv_account_cur_class()){
             case CLASS_PATIENT:{
-                if(UI_pat_menu())
+                if(UI_pat_menu() != HIS_OK)
                     UI_main_should_continue = false;
                 break;
             }
             case CLASS_DOCTOR:{
-                if(UI_doc_menu())
+                if(UI_doc_menu() != HIS_OK)
                     UI_main_should_continue = false;
                 break;
             }
             case CLASS_ROOT:{
-                if(UI_root_menu())
+                if(UI_root_menu() != HIS_OK)
                     UI_main_should_continue = false;
                 break;
             }
@@ -111,7 +111,7 @@ Status UI_main(){
         }
 
         Serv_account_signout();
-        IO_save();
+        Io_save();
         Rel_destroy();
         Data_destroy();
     }

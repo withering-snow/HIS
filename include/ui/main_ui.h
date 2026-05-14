@@ -3,6 +3,7 @@
 
 
 #include <HIS_service.h>
+#include <HIS_io.h>
 #include <pat_ui.h>
 #include <doc_ui.h>
 #include <root_ui.h>
