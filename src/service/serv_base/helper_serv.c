@@ -92,6 +92,18 @@ const char* Serv_helper_id_to_name(long long id, ServEntityType type){
             }
             break;
         }
+        case TYPE_WARD:{
+            List_T list = Data_get_ward();
+            void* find_ptr = List_first(list);
+            while(find_ptr != NULL){
+                Ward_T ward = *(Ward_T *)find_ptr;
+                if(id == Ward_id(ward)){
+                    return Ward_name(ward);
+                }
+                find_ptr = List_next(list);
+            }
+            break;
+        }
         default:
             break;
     }
@@ -156,10 +168,9 @@ T* Serv_helper_record_to_pkg(Record_T r){
 
         case REC_ADMISSION:{
             DataAdmission* data = (DataAdmission*)Rec_detail(r);
-            // TODO: ward_name required
-            // TODO: bed_id in record should be type int
-            snprintf(buffer, 512, "病房号[%s] 病床号[%d] 共缴纳押金[%lld.%02lld]元",
-                "ward_name", data->bed_id, data->deposit/100, data->deposit%100);
+            snprintf(buffer, 512, "病房[%s] 病床号[%d] 共缴纳押金[%lld.%02lld]元",
+                Serv_helper_id_to_name(data->ward_id, TYPE_WARD),
+                data->bed_label, data->deposit/100, data->deposit%100);
             break;
         }
 
@@ -170,13 +181,11 @@ T* Serv_helper_record_to_pkg(Record_T r){
             break;
         }
 
-        // TODO: ward_name required
-        // TODO: bed_id in record should be type int
         case REC_CHANGE_BED:{
             DataChangeBed* data = (DataChangeBed*)Rec_detail(r);
             snprintf(buffer, 512, "从[%s][%d]床 转至 [%s][%d]床",
-                "from_ward_name", data->from_bed_id,
-                "to_ward_name", data->to_bed_id);
+                Serv_helper_id_to_name(data->from_ward_id, TYPE_WARD), data->from_bed_label,
+                Serv_helper_id_to_name(data->to_ward_id, TYPE_WARD), data->to_bed_label);
             break;
         }
 
@@ -188,9 +197,8 @@ T* Serv_helper_record_to_pkg(Record_T r){
             break;
         }
 
-        // TODO: 谁tm教的你英语，回头改掉，是 stock in
         case REC_STOCK_IN:{
-            DataStackIn* data = (DataStackIn*)Rec_detail(r);
+            DataStockIn* data = (DataStockIn*)Rec_detail(r);
             snprintf(buffer, 512,
                 "入库[%s]共[%d]件 批号[%s]\n于[%s]过期 购入单价[%lld.%02lld]元",
                 Serv_helper_id_to_name(data->med_id, TYPE_MEDICINE),
@@ -200,7 +208,7 @@ T* Serv_helper_record_to_pkg(Record_T r){
         }
 
         case REC_STOCK_OUT:{
-            DataStackOut* data = (DataStackOut*)Rec_detail(r);
+            DataStockOut* data = (DataStockOut*)Rec_detail(r);
             snprintf(buffer, 512, "报废[%s]共[%d]件 批号[%s]",
                 Serv_helper_id_to_name(data->med_id, TYPE_MEDICINE),
                 data->total, data->batch_no);

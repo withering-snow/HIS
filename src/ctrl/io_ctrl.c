@@ -3,12 +3,6 @@
 
 
 
-// TODO： 临时函数，解决从表返回值后删除
-static List_T __tmp_list();
-
-
-
-
 static Status Io_save_patient()
 {
     char dir[32];
@@ -488,7 +482,7 @@ static Status Io_save_record()
         case REC_ADMISSION:
             {
                 DataAdmission* data = (DataAdmission*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld\n",data->ward_id,data->bed_id,data->deposit);
+                fprintf(fp,"%lld|%lld|%lld\n",data->ward_id,data->bed_label,data->deposit);
                 break;
             };
         case REC_DISCHARGE:
@@ -500,7 +494,7 @@ static Status Io_save_record()
         case REC_CHANGE_BED:
             {
                 DataChangeBed* data = (DataChangeBed*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld|%lld\n",data->from_ward_id,data->to_ward_id,data->from_bed_id,data->to_bed_id);
+                fprintf(fp,"%lld|%lld|%lld|%lld\n",data->from_ward_id,data->to_ward_id,data->from_bed_label,data->to_bed_label);
                 break;
             };
         case REC_CHANGE_DOC:
@@ -511,13 +505,13 @@ static Status Io_save_record()
             };
         case REC_STOCK_IN:
             {
-                DataStackIn* data = (DataStackIn*)Rec_detail(rec);
+                DataStockIn* data = (DataStockIn*)Rec_detail(rec);
                 fprintf(fp,"%lld|%lld|%lld|%lld|%d|%s\n",data->med_id,data->batch_id,data->buy_price,data->expire_ts,data->total,data->batch_no);
                 break;
             };
         case REC_STOCK_OUT:
             {
-                DataStackOut* data = (DataStackOut*)Rec_detail(rec);
+                DataStockOut* data = (DataStockOut*)Rec_detail(rec);
                 fprintf(fp,"%lld|%lld|%d|%s\n",data->med_id,data->batch_id,data->total,data->batch_no);
                 break;
             };
@@ -593,7 +587,7 @@ static Status Io_load_record()
             case REC_ADMISSION:
             {
                 DataAdmission data;
-                fscanf(fp,"%lld|%lld|%lld\n", &data.ward_id, &data.bed_id,&data.deposit);
+                fscanf(fp,"%lld|%lld|%lld\n", &data.ward_id, &data.bed_label,&data.deposit);
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -609,7 +603,7 @@ static Status Io_load_record()
             case REC_CHANGE_BED:
             {
                 DataChangeBed data;
-                fscanf(fp,"%lld|%lld|%lld|%lld\n",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_id,&data.to_bed_id);
+                fscanf(fp,"%lld|%lld|%lld|%lld\n",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_label,&data.to_bed_label);
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -624,7 +618,7 @@ static Status Io_load_record()
             }
             case REC_STOCK_IN:
             {
-                DataStackIn data;
+                DataStockIn data;
                 fscanf(fp,"%lld|%lld|%lld|%lld|%d|%31[^|]\n",
                     &data.med_id, &data.batch_id,&data.buy_price,&data.expire_ts,&data.total,data.batch_no);
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
@@ -633,7 +627,7 @@ static Status Io_load_record()
             }
             case REC_STOCK_OUT:
             {
-                DataStackOut data;
+                DataStockOut data;
                 fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &data.med_id, &data.batch_id,&data.total,data.batch_no);
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
@@ -664,7 +658,7 @@ static Status Io_save_doctor_relation()
         return HIS_ERR_IO_FAILURE;
     }
     fprintf(fp,"Pat_id|Doc_id\n");
-    List_T List_rel_doc = __tmp_list();  //TODO:
+    List_T List_rel_doc = Rel_doc_get();
     Rel_doc* rel_doc_ptr = List_first(List_rel_doc);
     while (rel_doc_ptr != NULL)
     {
@@ -712,7 +706,7 @@ static Status Io_save_ward_relation()
         return HIS_ERR_IO_FAILURE;
     }
     fprintf(fp,"Pat_id|Ward_id\n");
-    List_T List_rel_ward = __tmp_list();//TODO:
+    List_T List_rel_ward = Rel_ward_get();
     Rel_ward* rel_ward_ptr= List_first(List_rel_ward);
     while (rel_ward_ptr != NULL)
     {

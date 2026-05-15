@@ -218,3 +218,13 @@ long long Serv_patient_get_fund(){
     }
     return Fund_balance(fund);
 }
+
+void Serv_patient_signup(gender g, int birth, const char* name, const char* phone, const char* id_buf){
+    Patient_T pat = Patient_new(g, Int_date_to_time(birth), name, phone, id_buf);
+    List_push_back(Data_get_patient(), &pat);
+
+    Fund_T fund = Fund_new(Patient_id(pat));
+    List_push_back(Data_get_fund(), &fund);
+
+    Serv_account_signup(CLASS_PATIENT, Patient_id(pat), name, NULL);
+}
