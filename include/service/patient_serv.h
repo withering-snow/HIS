@@ -70,5 +70,6 @@ List_T Serv_patient_queue_status();
  */
 long long Serv_patient_get_fund();
 
+void Serv_patient_signup(gender g, int birth, const char* name, const char* phone, const char* id_bu);
 
 #endif //HIS_PATIENT_SERV_H

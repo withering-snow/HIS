@@ -29,7 +29,7 @@ const char* Time_to_string_date(long long time_stamp);
  * @brief 将 Unix 时间戳转换为 YYYYMMDD 格式的整数
  * @example 1712880000 -> 20240412
  */
-int Time_to_int_date(long long ts)
+int Time_to_int_date(long long ts);
 
 /**
  * @brief 将 YYYYMMDD 格式的整数转换回 Unix 时间戳（该日 00:00:00）

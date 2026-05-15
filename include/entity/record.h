@@ -59,7 +59,7 @@ typedef struct {
 typedef struct {
     long long   ward_id;
     long long   deposit;        // 交纳的押金
-    int         bed_id;
+    int         bed_label;
 } DataAdmission;
 // 出院详情
 typedef struct{
@@ -70,8 +70,8 @@ typedef struct{
 typedef struct {
     long long   from_ward_id;
     long long   to_ward_id;
-    long long   from_bed_id;
-    long long   to_bed_id;
+    int         from_bed_label;
+    int         to_bed_label;
 } DataChangeBed;
 // 医生变动
 typedef struct {
@@ -86,14 +86,14 @@ typedef struct{
     long long   expire_ts;      // 过期时间
     int         total;          // 总购入量
     char        batch_no[32];   // 批号
-}DataStackIn;
+}DataStockIn;
 // 报废详情
 typedef struct{
     long long   med_id;
     long long   batch_id;
     int         total;          // 总报废量
     char        batch_no[32];   // 批号
-}DataStackOut;
+}DataStockOut;
 
 
 
@@ -121,7 +121,7 @@ T Rec_pres_new(
 ;
 T Rec_admit_new(
     long long cost, long long pat_id,
-    long long ward_id, long long bed_id, long long deposit)
+    long long ward_id, int bed_label, long long deposit)
 ;
 T Rec_disc_new(
     long long cost, long long pat_id,
@@ -130,7 +130,7 @@ T Rec_disc_new(
 T Rec_c_bed_new(
     long long cost, long long pat_id,
     long long from_ward_id, long long to_ward_id,
-    long long from_bed_id, long long to_bed_id)
+    int from_bed_label, int to_bed_label)
 ;
 T Rec_c_doc_new(
     long long cost, long long pat_id,

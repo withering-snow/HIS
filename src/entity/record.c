@@ -18,8 +18,8 @@ struct Record_T {
         DataDischarge       disc;
         DataChangeBed       c_bed;
         DataChangeDoc       c_doc;//前面的actor_id为pat_id
-        DataStackIn         s_in;//后两个actor_id为doc_id
-        DataStackOut        s_out;
+        DataStockIn         s_in;//后两个actor_id为doc_id
+        DataStockOut        s_out;
     }               detail;
 
     // 4 bytes
@@ -95,8 +95,8 @@ Record_T Rec_pres_new(long long cost, long long pat_id, long long doc_id, long l
 }
 
 Record_T Rec_admit_new(long long cost, long long pat_id, long long ward_id,
-    long long bed_id, long long deposit) {
-    DataAdmission data = {.ward_id = ward_id, .bed_id = bed_id, .deposit = deposit};
+    int bed_label, long long deposit) {
+    DataAdmission data = {.ward_id = ward_id, .bed_label = bed_label, .deposit = deposit};
     return Rec_load(REC_ADMISSION, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
 }
@@ -109,12 +109,12 @@ Record_T Rec_disc_new(long long cost, long long pat_id, long long total_bill, lo
 
 Record_T Rec_c_bed_new(long long cost, long long pat_id,
                        long long from_ward_id, long long to_ward_id,
-                       long long from_bed_id, long long to_bed_id) {
+                       int from_bed_label, int to_bed_label) {
     DataChangeBed data = {
         .from_ward_id = from_ward_id,
         .to_ward_id = to_ward_id,
-        .from_bed_id = from_bed_id,
-        .to_bed_id = to_bed_id
+        .from_bed_label = from_bed_label,
+        .to_bed_label = to_bed_label
     };
     return Rec_load(REC_CHANGE_BED, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
@@ -127,7 +127,7 @@ Record_T Rec_c_doc_new(long long cost, long long pat_id, long long old_doc_id, l
 
 Record_T Rec_s_in_new(long long cost, long long admin_id, long long med_id, long long batch_id, long long buy_price,
     long long expire_ts, int total, const char *batch_no){
-    DataStackIn data = {
+    DataStockIn data = {
         .batch_id = batch_id,
         .buy_price = buy_price,
         .expire_ts = expire_ts,
@@ -142,7 +142,7 @@ Record_T Rec_s_in_new(long long cost, long long admin_id, long long med_id, long
 
 Record_T Rec_s_out_new(long long cost, long long admin_id, long long med_id, long long batch_id, int total,
     const char *batch_no){
-    DataStackOut data = {
+    DataStockOut data = {
         .batch_id = batch_id,
         .med_id = med_id,
         .total = total
