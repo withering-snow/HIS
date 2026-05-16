@@ -27,6 +27,7 @@ Status UI_main(){
         Rel_init();
         Io_load();
         Rel_queue_update();
+        Log_open();
         CLEAN();
 
         printf("欢迎使用医疗信息管理系统！\n");
@@ -69,7 +70,7 @@ Status UI_main(){
 
                 case HIS_ERR_NOT_FOUND:
                     printf("账户不存在，是否创建病人账户？\n输入0确认，其他任意键取消\n");
-                    long long choice;
+                    long long choice = 1;
                     scanf("%lld", &choice);
                     clear_space();
                     CLEAN();
@@ -87,8 +88,7 @@ Status UI_main(){
                         Io_save();
                         printf("账户创建成功！按任意键返回……");
                         getchar();
-                        CLEAN()
-                        ;
+                        CLEAN();
                     }
                     break;
 
@@ -99,7 +99,7 @@ Status UI_main(){
 
 
                 case HIS_OK:
-                    printf("登录成功！");
+                    printf("登录成功！\n");
                     has_logged = true;
                     break;
 
@@ -114,21 +114,21 @@ Status UI_main(){
 
 
             case CLASS_PATIENT:{
-                if(UI_pat_menu() != HIS_OK)
+                if(UI_pat_menu() == HIS_QUIT)
                     UI_main_should_continue = false;
                 break;
             }
 
 
             case CLASS_DOCTOR:{
-                if(UI_doc_menu() != HIS_OK)
+                if(UI_doc_menu() == HIS_QUIT)
                     UI_main_should_continue = false;
                 break;
             }
 
 
             case CLASS_ROOT:{
-                if(UI_root_menu() != HIS_OK)
+                if(UI_root_menu() == HIS_QUIT)
                     UI_main_should_continue = false;
                 break;
             }
@@ -145,6 +145,7 @@ Status UI_main(){
         Io_save();
         Rel_destroy();
         Data_destroy();
+        Log_close();
     }
 
 

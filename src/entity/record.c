@@ -216,13 +216,3 @@ Status Rec_set_reg_status(Record_T r, RegistrationStatus new_status)
     return HIS_OK;
 }
 
-//TODO：以下作废
-
-// 将记录转换为字符串描述（比如显示 "患者A 挂号 医生B 费用10元"）
-void Rec_to_string(Record_T r, char *buf, size_t len){
-    ASSERT(r && buf, "指针或缓冲区为空");
-    // TODO: 外部提供 buffer 空间，内部填充
-    // 先格式化公共头部：时间、ID、类型
-    // 然后根据 switch(r->type) 格式化不同的 detail 部分
-    // 建议使用 snprintf 以防止 buffer 溢出
-}

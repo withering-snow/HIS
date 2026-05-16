@@ -1,6 +1,6 @@
 #include <patient_serv.h>
 
-
+#include "log_ctrl.h"
 
 
 #define T ServPatientDataPackage
@@ -227,4 +227,5 @@ void Serv_patient_signup(gender g, int birth, const char* name, const char* phon
     List_push_back(Data_get_fund(), &fund);
 
     Serv_account_signup(CLASS_PATIENT, Patient_id(pat), name, NULL);
+    Log_printf(CLASS_PATIENT, Patient_id(pat), "病人账户自助创建，同步创建 Patient_T Account_T Fund_T");
 }

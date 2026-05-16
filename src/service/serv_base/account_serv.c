@@ -11,7 +11,7 @@ static struct{
 }
 _cur_account_info = {
     CLASS_NO_USER,
-    -1LL, //TODO: INVALID_ID
+    INVALID_ID, // 未登录
     "NoUser"
 };
 
@@ -109,7 +109,13 @@ Status Serv_account_signin(
     }
 
     Account_T acc = Serv_helper_finder(actor_id, TYPE_ACCOUNT);
-    return Account_check_password(acc, password);
+    Status s = Account_check_password(acc, password);
+    if(s == HIS_OK){
+        _cur_account_info.class = class;
+        _cur_account_info.actor_id = actor_id;
+        strncpy(_cur_account_info.actor_name, Account_name(acc), 32);
+    }
+    return s;
 }
 
 Status Serv_account_signout(){
@@ -118,7 +124,7 @@ Status Serv_account_signout(){
     }
 
     _cur_account_info.class = CLASS_NO_USER;
-    _cur_account_info.actor_id = -1LL; //TODO: INVALID_ID
+    _cur_account_info.actor_id = INVALID_ID; // 登出
     strncpy(_cur_account_info.actor_name, "NoUser", 32);
     return HIS_OK;
 }
@@ -149,5 +155,5 @@ AccountClass Serv_account_cur_class(void){
 }
 
 bool Serv_account_is_logged_in(void){
-    return (_cur_account_info.actor_id != -1LL) ? true : false; // TODO: INVALID_ID
+    return (_cur_account_info.actor_id != INVALID_ID) ? true : false; // 是否已登录
 }

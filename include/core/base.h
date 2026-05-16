@@ -20,6 +20,9 @@
 
 // ---------------- 状态码 ---------------- //
 typedef enum {
+    // ui 层返回
+    HIS_QUIT = 1,
+
     // 基础状态
     HIS_OK = 0,                     // 正常运行
     HIS_ERR_NO_MEM = -1,            // 内存耗尽
@@ -89,9 +92,10 @@ typedef enum {
 
 // 科室与文字的转换
 static const char* department_names[12] = {
+    "未知科室",
     "内科", "外科", "儿科", "妇产科", "眼科",
     "口腔科", "皮肤科", "急诊科", "放射科", "检验科",
-    "药剂科", "未知科室"
+    "药剂科"
 };
 
 /**
@@ -100,8 +104,8 @@ static const char* department_names[12] = {
  * @return 返回对应的字符串名称，若不合法则返回“未知科室”
  */
 static inline const char* department_name(Department department) {
-    if (department < 0 || department >= DEP_COUNT)
-        return department_names[DEP_COUNT];
+    if (department <= 0 || department >= DEP_COUNT)
+        return department_names[0];
     return department_names[department];
 }
 // ---------------- 科室相关 ---------------- //

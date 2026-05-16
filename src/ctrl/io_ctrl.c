@@ -185,6 +185,7 @@ static Status Io_save_medicine()
     {
         return HIS_ERR_IO_FAILURE;
     }
+    fprintf(fp,"Med_id|Cur_price|Total_remain|Name\n");
     List_T List_med = Data_get_medicine();
     void* med_ptr = List_first(List_med);
 
@@ -414,7 +415,7 @@ static Status Io_load_ward()
             {
                 return HIS_ERR_IO_FAILURE;
             }
-            Ward_T ward = Ward_load(id,dept,daily_cost);
+            Ward_T ward = Ward_load(id,dept,daily_cost,"{}");
             recent_ward = ward;
             List_push_back(List_ward, &ward);
         }
@@ -482,7 +483,7 @@ static Status Io_save_record()
         case REC_ADMISSION:
             {
                 DataAdmission* data = (DataAdmission*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld\n",data->ward_id,data->bed_label,data->deposit);
+                fprintf(fp,"%lld|%d|%lld\n",data->ward_id,data->bed_label,data->deposit);
                 break;
             };
         case REC_DISCHARGE:
@@ -494,7 +495,7 @@ static Status Io_save_record()
         case REC_CHANGE_BED:
             {
                 DataChangeBed* data = (DataChangeBed*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld|%lld\n",data->from_ward_id,data->to_ward_id,data->from_bed_label,data->to_bed_label);
+                fprintf(fp,"%lld|%lld|%d|%d\n",data->from_ward_id,data->to_ward_id,data->from_bed_label,data->to_bed_label);
                 break;
             };
         case REC_CHANGE_DOC:
@@ -587,7 +588,7 @@ static Status Io_load_record()
             case REC_ADMISSION:
             {
                 DataAdmission data;
-                fscanf(fp,"%lld|%lld|%lld\n", &data.ward_id, &data.bed_label,&data.deposit);
+                fscanf(fp,"%lld|%d|%lld\n", &data.ward_id, &data.bed_label, &data.deposit);
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -603,7 +604,7 @@ static Status Io_load_record()
             case REC_CHANGE_BED:
             {
                 DataChangeBed data;
-                fscanf(fp,"%lld|%lld|%lld|%lld\n",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_label,&data.to_bed_label);
+                fscanf(fp,"%lld|%lld|%d|%d\n",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_label, &data.to_bed_label);
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -747,66 +748,70 @@ static Status Io_load_ward_relation()
 Status Io_save()
 {
     Status s;
+    bool any_fail = false;
+
     if((s = Io_save_patient()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_doctor()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_fund()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_medicine()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_account()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_ward()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_record()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_doctor_relation()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_ward_relation()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
-    return HIS_OK;
+    return any_fail ? HIS_ERR_IO_FAILURE : HIS_OK;
 }
 
 
 Status Io_load()
 {
     Status s;
-    if((s = Io_load_patient()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_doctor()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_fund()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_medicine()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_account()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_ward()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_record()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_doctor_relation()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_ward_relation()) != HIS_OK){
-        return s;
-    }
-    return HIS_OK;
+    bool any_load = false;
+
+    s = Io_load_patient();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_doctor();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_fund();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_medicine();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_account();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_ward();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_record();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_doctor_relation();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_ward_relation();
+    if(s == HIS_OK) any_load = true;
+
+    return any_load ? HIS_OK : HIS_ERR_IO_FAILURE;
 }

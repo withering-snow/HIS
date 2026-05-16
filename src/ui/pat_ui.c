@@ -95,7 +95,7 @@ Status UI_pat_menu() {
                 if (choice2 == PAT_SUBORD_MENU_CHOICE_RECORD) {
                     // 3. 查询诊疗记录
                     List_T records = Serv_patient_records(pat_id);
-                    printf("共 %d 条记录\n", List_size(records));
+                    printf("共 %zu 条记录\n", List_size(records));
                     Serv_helper_free_list(records);
                 }
                 else if (choice2 == PAT_SUBORD_MENU_FILTER_TIME) {

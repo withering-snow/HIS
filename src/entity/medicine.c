@@ -27,7 +27,7 @@ Medicine_T Medicine_load(
     long long id, long long cur_price,
     int total_remain, const char* name)
 {
-    Medicine_T m=safe_malloc(sizeof(Medicine_T));
+    Medicine_T m=safe_malloc(sizeof(struct Medicine_T));
     LOAD_ID(id);
     m->id=id;
     m->cur_price=cur_price;
@@ -41,10 +41,11 @@ Medicine_T Medicine_new(
     long long cur_price,
     const char* name)
 {
-    Medicine_T m=safe_malloc(sizeof(Medicine_T));
+    Medicine_T m=safe_malloc(sizeof(struct Medicine_T));
     ASSERT(m !=NULL,"不合法");
     m->id=NEW_ID();
     m->cur_price=cur_price;
+    m->total_remain = 0;
     strncpy(m->name,name,32);
     m->batches = List_new(sizeof(MedicineBatch));
     return m;
