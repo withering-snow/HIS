@@ -5,7 +5,7 @@
 #include <HIS_core.h>
 #include <HIS_db.h>
 
-#ifdef __WIN32
+#ifdef _WIN32
 #define SEP '\\'
 #else
 #define SEP '/'

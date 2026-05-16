@@ -15,7 +15,7 @@ static const char* time_frame_names[] =
     "非法时段"
     };
 static const char* registration_type_names[] =
-{"预约", "候诊", "诊毕"};
+{"预约", "候诊", "看诊中", "诊毕"};
 
 
 const void * Serv_helper_finder(long long entity_id, ServEntityType type){

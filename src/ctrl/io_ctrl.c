@@ -1,5 +1,11 @@
 #include <io_ctrl.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
+
 
 
 
@@ -45,7 +51,7 @@ static Status Io_load_patient()
     char name[32]; char phone[20]; char id_card[20];
 
     while (
-        fscanf(fp, "%lld|%d|%lld|%31[^|]|%19[^|]|%19[^|]\n",
+        fscanf(fp, "%lld|%d|%lld|%31[^|]|%19[^|]|%19[^|\r\n]\n",
             &id, &gender, &birth_ts, name, phone, id_card)
             == 6)
     {
@@ -69,7 +75,7 @@ static Status Io_save_doctor()
     {
         return HIS_ERR_IO_FAILURE;
     }
-    fprintf(fp,"ID|Gender|Birth_TS|Is_Active|Debt|Title|Name|Phone|ID_Card|Reg_Fee\n");
+    fprintf(fp,"ID|Gender|Birth_TS|Is_Active|Dept|Title|Name|Phone|ID_Card|Reg_Fee\n");
     List_T List_doctor = Data_get_doctor();
     void* doc_ptr = List_first(List_doctor);
     while (doc_ptr != NULL)
@@ -239,7 +245,7 @@ static Status Io_load_medicine()
 
     Medicine_T recent_med = NULL;  char type = 'M';
 
-    while (fscanf(fp, "%c|", &type))
+    while (fscanf(fp, "%c|", &type) == 1)
     {
         if (type == 'M')
         {
@@ -247,23 +253,40 @@ static Status Io_load_medicine()
             int         total_remain; char        name[32];
             if (fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &id,&cur_price, &total_remain, name) != 4)
             {
-                return HIS_ERR_IO_FAILURE;
+                // 跳过损坏的行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
             }
             Medicine_T medicine = Medicine_load(id, cur_price,total_remain,name);
             recent_med = medicine;
             List_push_back(List_med, &medicine);
         }
-        else
+        else if (type == 'B')
         {
+            if (recent_med == NULL) {
+                // 没有对应的主表记录，跳过此行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
+            }
             MedicineBatch bat;
-            fscanf(fp, "%lld|%lld|%lld|%d|%d|%31[^|]\n",
+            memset(&bat, 0, sizeof(bat));
+            if (fscanf(fp, "%lld|%lld|%lld|%d|%d|%31[^|]\n",
                 &bat.id,
                 &bat.buy_price,
                 &bat.expire_ts,
                 &bat.remain,
                 &bat.status,
-                bat.batch_no);
+                bat.batch_no) != 6)
+            {
+                // 跳过损坏的行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
+            }
             List_push_back(Medicine_batches(recent_med), &bat);
+        }
+        else {
+            // 未知类型，跳过整行
+            fscanf(fp, "%*[^\n]\n");
         }
     }
     fclose(fp);
@@ -346,10 +369,11 @@ static Status Io_save_ward()
     char dir[32];
     snprintf(dir, sizeof(dir), "data%cWard.txt", SEP);
 
-    FILE *fp = fopen(dir, "r");
+    FILE *fp = fopen(dir, "w");
     if (fp == NULL){
         return HIS_ERR_IO_FAILURE;
     }
+    fprintf(fp, "Ward_id|Dept|Daily_Cost|Bed_Count|Empty_Count|Ward_Name\n");
     List_T List_ward = Data_get_ward();
     void* ward_ptr = List_first(List_ward);
 
@@ -357,8 +381,8 @@ static Status Io_save_ward()
     {
         Ward_T ward = *(Ward_T* )ward_ptr;
 
-        fprintf(fp, "W|%lld|%d|%lld|%d|%d\n",Ward_id(ward),Ward_dept(ward),
-        Ward_daily_cost(ward),Ward_bed_count(ward),Ward_empty_count(ward));
+        fprintf(fp, "W|%lld|%d|%lld|%d|%d|%s\n",Ward_id(ward),Ward_dept(ward),
+        Ward_daily_cost(ward),Ward_bed_count(ward),Ward_empty_count(ward),Ward_name(ward));
 
 
         List_T List_bed = Ward_beds(ward);
@@ -402,7 +426,7 @@ static Status Io_load_ward()
 
     Ward_T recent_ward = NULL;char type = 'W';
 
-    while (fscanf(fp,"%c|",&type))
+    while (fscanf(fp,"%c|",&type) == 1)
     {
         if (type=='W')
         {
@@ -411,23 +435,36 @@ static Status Io_load_ward()
             long long   daily_cost;
             int         bed_count;
             int         empty_count;
-            if (fscanf(fp,"W|%lld|%d|%lld|%d|%d\n",&id,&dept,&daily_cost,&bed_count,&empty_count)!=5)
+            char        ward_name[32];
+            if (fscanf(fp,"%lld|%d|%lld|%d|%d|%31[^|\n]\n",&id,&dept,&daily_cost,&bed_count,&empty_count,ward_name)!=6)
             {
                 return HIS_ERR_IO_FAILURE;
             }
-            Ward_T ward = Ward_load(id,dept,daily_cost,"{}");
+            Ward_T ward = Ward_load(id,dept,daily_cost,ward_name);
             recent_ward = ward;
             List_push_back(List_ward, &ward);
         }
-        else
+        else if (type == 'B')
         {
             Bed_T bed ;
-            fscanf(fp, "B|%d|%lld|%d|%lld|\n",
+            memset(&bed, 0, sizeof(bed));
+            if (fscanf(fp, "%d|%lld|%d|%lld|\n",
                 &bed.bed_label,
                 &bed.pat_id,
                 &bed.status,
-                &bed.start_ts);
-            List_push_back(Ward_beds(recent_ward), &bed);
+                &bed.start_ts) != 4)
+            {
+                // 跳过损坏的行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
+            }
+            if (recent_ward != NULL) {
+                Ward_bed_load(recent_ward, bed.bed_label, bed.pat_id, (BedStatus)bed.status, bed.start_ts);
+            }
+        }
+        else {
+            // 未知类型，跳过整行
+            fscanf(fp, "%*[^\n]\n");
         }
     }
     fclose(fp);
@@ -745,8 +782,18 @@ static Status Io_load_ward_relation()
 
 
 
+static void Io_ensure_data_dir()
+{
+#ifdef _WIN32
+    mkdir("data");
+#else
+    mkdir("data", 0755);
+#endif
+}
+
 Status Io_save()
 {
+    Io_ensure_data_dir();
     Status s;
     bool any_fail = false;
 

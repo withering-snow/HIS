@@ -55,6 +55,7 @@ Medicine_T Medicine_new(
 void Medicine_free(Medicine_T *m)
 {
     ASSERT(m !=NULL,"不合法");
+    List_free(&((*m)->batches));
     free(*m);
     *m=NULL;
 }

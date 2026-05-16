@@ -60,8 +60,18 @@ Status UI_main(){
                 CLEAN();
                 printf("============= 欢迎使用医疗信息管理系统 =============\n");
                 char id_buf[20] = {0}, pw_buf[20] = {0};
-                get_input_str("请输入您的账号（身份证号）：\n", id_buf, 20);
-                get_input_str("请输入密码（病人账户无需密码）：\n", pw_buf, 20);
+                printf("请输入您的账号（输入 q 退出程序）：\n");
+                printf("  - 管理员：输入 0\n");
+                printf("  - 病人/医生：输入身份证号\n");
+                get_input_str("", id_buf, 20);
+                if (id_buf[0] == 'q' || id_buf[0] == 'Q') {
+                    if (id_buf[1] == '\0') {
+                        UI_main_should_continue = false;
+                        break;
+                    }
+                }
+                printf("请输入密码（病人账户无需密码，直接回车即可）：\n");
+                get_input_str("", pw_buf, 20);
                 Status login_status = Serv_account_signin(id_buf, pw_buf);
 
 
@@ -78,16 +88,26 @@ Status UI_main(){
                     if(choice == 0){
                         printf("请输入您的个人信息：\n");
 
-                        gender g; int birth; char name[32]; char phone[20];
+                        gender g; char name[32]; char phone[20];
                         g = get_input_long_long("性别：\n0. 女\n1. 男\n", 0, 1);
-                        birth = get_input_long_long("生日：（形如 20050101）\n", 19700101,Time_to_int_date(Time_now()) );
+
+                        // 三级输入生日
+                        printf("出生日期：\n");
+                        int y = (int)get_input_long_long("  年 (1900~2026)", 1900, 2026);
+                        int m = (int)get_input_long_long("  月 (1~12)", 1, 12);
+                        int d = (int)get_input_long_long("  日 (1~31)", 1, 31);
+                        struct tm btm = {0};
+                        btm.tm_year = y - 1900; btm.tm_mon = m - 1; btm.tm_mday = d;
+                        long long birth_ts = (long long)mktime(&btm);
+                        int birth = Time_to_int_date(birth_ts);
+
                         get_input_str("姓名：\n", name, 32);
                         get_input_str("联系电话：\n", phone, 20);
 
                         Serv_patient_signup(g, birth, name, phone, id_buf);
                         Io_save();
-                        printf("账户创建成功！按任意键返回……");
-                        getchar();
+                        printf("账户创建成功！按回车键返回……\n");
+                        clear_space();
                         CLEAN();
                     }
                     break;
@@ -104,9 +124,9 @@ Status UI_main(){
                     break;
 
                 }
+                SLEEP_MS(1500);
             }
         }
-
 
 
 

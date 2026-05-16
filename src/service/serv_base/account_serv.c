@@ -1,4 +1,5 @@
 #include <account_serv.h>
+#include <log_ctrl.h>
 
 
 
@@ -38,7 +39,8 @@ Status Serv_account_signup(
     void *find_ptr = List_first(list);
     while(find_ptr != NULL){
         Account_T tmp = *(Account_T*)find_ptr;
-        if(Account_id(tmp) == actor_id){
+        // 同一 class 下 actor_id 唯一（病人和医生 ID 池独立，允许相同数字）
+        if(Account_id(tmp) == actor_id && Account_class(tmp) == class){
             return HIS_ERR_ALREADY_EXISTS;
         }
         find_ptr = List_next(list);
@@ -108,12 +110,34 @@ Status Serv_account_signin(
         return HIS_ERR_NOT_FOUND;
     }
 
-    Account_T acc = Serv_helper_finder(actor_id, TYPE_ACCOUNT);
+    // 用 (class, actor_id) 联合查找 Account
+    List_T acc_list = Data_get_account();
+    Account_T acc = NULL;
+    void* acc_ptr = List_first(acc_list);
+    while (acc_ptr != NULL) {
+        Account_T tmp = *(Account_T*)acc_ptr;
+        if (Account_id(tmp) == actor_id && Account_class(tmp) == class) {
+            acc = tmp;
+            break;
+        }
+        acc_ptr = List_next(acc_list);
+    }
+    if (acc == NULL) {
+        return HIS_ERR_NOT_FOUND;
+    }
     Status s = Account_check_password(acc, password);
     if(s == HIS_OK){
         _cur_account_info.class = class;
         _cur_account_info.actor_id = actor_id;
         strncpy(_cur_account_info.actor_name, Account_name(acc), 32);
+        const char* class_str = "";
+        switch(class) {
+            case CLASS_ROOT:    class_str = "管理员"; break;
+            case CLASS_PATIENT: class_str = "病人"; break;
+            case CLASS_DOCTOR:  class_str = "医生"; break;
+            default:            class_str = "未知"; break;
+        }
+        Log_printf(class, actor_id, "%s[%lld][%s]登录系统", class_str, actor_id, Account_name(acc));
     }
     return s;
 }
@@ -122,6 +146,15 @@ Status Serv_account_signout(){
     if(_cur_account_info.class == CLASS_NO_USER){
         return HIS_ERR_NO_USER;
     }
+
+    const char* class_str = "";
+    switch(_cur_account_info.class) {
+        case CLASS_ROOT:    class_str = "管理员"; break;
+        case CLASS_PATIENT: class_str = "病人"; break;
+        case CLASS_DOCTOR:  class_str = "医生"; break;
+        default:            class_str = "未知"; break;
+    }
+    Log_printf(_cur_account_info.class, _cur_account_info.actor_id, "%s[%lld][%s]登出系统", class_str, _cur_account_info.actor_id, _cur_account_info.actor_name);
 
     _cur_account_info.class = CLASS_NO_USER;
     _cur_account_info.actor_id = INVALID_ID; // 登出

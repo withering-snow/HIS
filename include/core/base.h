@@ -104,7 +104,7 @@ static const char* department_names[12] = {
  * @return 返回对应的字符串名称，若不合法则返回“未知科室”
  */
 static inline const char* department_name(Department department) {
-    if (department <= 0 || department >= DEP_COUNT)
+    if (department < 0 || department >= DEP_COUNT)
         return department_names[0];
     return department_names[department];
 }
@@ -228,7 +228,7 @@ static void get_input_str(const char* prompt, char* dest, int max_len) { \
     while (1) {                                                     \
         printf("%s (限%d字符): ", prompt, max_len - 1);              \
         if (fgets(dest, max_len, stdin) == NULL) continue;          \
-                                                                    \
+                                                                     \
         size_t len = strlen(dest);                                  \
         if (len > 0 && dest[len - 1] != '\n') {                     \
             printf("错误：输入过长！请重新输入（最多%d字符）。\n", max_len - 1); \
@@ -236,16 +236,12 @@ static void get_input_str(const char* prompt, char* dest, int max_len) { \
             continue;                                               \
         }                                                           \
         if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0'; \
-                                                                    \
+                                                                     \
         if (strchr(dest, '|')) {                                    \
             printf("错误：输入包含非法字符 '|'，请重新输入。\n");      \
             continue;                                               \
         }                                                           \
-        if (strlen(dest) == 0) {                                    \
-            printf("错误：内容不能为空，请重新输入。\n");              \
-            continue;                                               \
-        }                                                           \
-                                                                    \
+                                                                     \
         break;                                                      \
     }                                                               \
 }                                                                   \
@@ -262,6 +258,11 @@ static long long get_input_long_long(const char* prompt,            \
         clear_space();                                              \
         return val;                                                 \
     }                                                               \
+}                                                                   \
+static void press_enter() {                                         \
+    printf("\n按回车继续...");                                       \
+    clear_space();                                                  \
+    getchar();                                                      \
 }
 // ---------------- 工具 ---------------- //
 

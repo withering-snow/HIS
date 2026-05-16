@@ -113,6 +113,12 @@ Status Serv_patient_register(long long doc_id, int target_date, int time_frame){
     List_T records = Data_get_record();
     List_push_back(records, &r);
 
+    // 绑定医患关系
+    Rel_bind_doctor(Serv_account_cur_id(), doc_id);
+
+    Doctor_T doc = (Doctor_T)Serv_helper_finder(doc_id, TYPE_DOCTOR);
+    const char* doc_name = doc ? Doctor_name(doc) : "未知";
+    Log_printf(CLASS_PATIENT, Serv_account_cur_id(), "病人预约挂号 医生[%lld][%s] 日期[%d] 时段[%d]", doc_id, doc_name, target_date, time_frame);
     return HIS_OK;
 }
 
@@ -145,11 +151,13 @@ Status Serv_patient_checkin(long long doc_id){
                 if(result != HIS_OK)
                     return result;
 
-                Fund_deposit(fund, Doctor_reg_fee(doctor));
+                Fund_withdraw(fund, Doctor_reg_fee(doctor));
                 Rec_set_reg_status(record, WAITING);
                 if(Rel_queue_check_in(doc_id, pat_id) != HIS_OK){
                     return HIS_ERR_ALREADY_EXISTS;
                 }
+                const char* doc_name = doctor ? Doctor_name(doctor) : "未知";
+                Log_printf(CLASS_PATIENT, pat_id, "病人签到 医生[%lld][%s] 挂号费[%lld]", doc_id, doc_name, Doctor_reg_fee(doctor));
                 return HIS_OK;
             }
         }

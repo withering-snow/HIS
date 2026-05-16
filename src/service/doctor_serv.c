@@ -17,6 +17,7 @@ Status Serv_doc_active(){
     }
     _cur_is_active = true;
     _cur_doc_pat.doc_id = Serv_account_cur_id();
+    Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生开始出诊");
     return HIS_OK;
 }
 
@@ -25,6 +26,7 @@ Status Serv_doc_unactive(){
     if(!_cur_is_active){
         return HIS_ERR_NO_USER;
     }
+    Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生结束出诊");
     _cur_is_active = false;
     _cur_doc_pat.doc_id = INVALID_ID;
     return HIS_OK;
@@ -39,6 +41,9 @@ Status Serv_doc_call_reg(){
     }
     Status s = Rel_queue_call_reg(_cur_doc_pat.doc_id);
     _cur_doc_pat.pat_id = Rel_queue_cur_pat(_cur_doc_pat.doc_id);
+    if (s == HIS_OK) {
+        Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生叫号 当前看诊病人[%lld]", _cur_doc_pat.pat_id);
+    }
     return s;
 }
 
