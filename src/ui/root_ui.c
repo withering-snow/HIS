@@ -28,29 +28,38 @@ typedef enum{
 
 // 三级输入日期：年、月、日分别输入，每级校验，不合法则重新输入
 // 返回时间戳
+static int __is_leap_year(int y) {
+    return (y % 400 == 0) || (y % 4 == 0 && y % 100 != 0);
+}
+static int __month_days(int y, int m) {
+    static int days[13] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
+    if (m == 2 && __is_leap_year(y)) return 29;
+    return days[m];
+}
 static long long __input_date(const char* prompt) {
     printf("%s\n", prompt);
-
+    char buf[16];
     int y, m, d;
-    // 输入年份
     while (1) {
-        y = (int)get_input_long_long("  年 (1900~2026)", 1900, 2026);
-        if (y >= 1900 && y <= 2026) break;
-        printf("  年份不合法，请重新输入\n");
+        printf("  请输入8位数字日期 (如20061121): ");
+        if (fgets(buf, 16, stdin) == NULL) continue;
+        size_t len = strlen(buf);
+        if (len > 0 && buf[len-1] == '\n') buf[len-1] = '\0';
+        if (strlen(buf) != 8) {
+            printf("  必须输入8位数字！\n");
+            continue;
+        }
+        int ok = 1;
+        for (int i = 0; i < 8; i++) {
+            if (buf[i] < '0' || buf[i] > '9') { ok = 0; break; }
+        }
+        if (!ok) { printf("  只能包含数字！\n"); continue; }
+        sscanf(buf, "%4d%2d%2d", &y, &m, &d);
+        if (y < 1900 || y > 2026) { printf("  年份不合法 (1900~2026)！\n"); continue; }
+        if (m < 1 || m > 12) { printf("  月份不合法 (1~12)！\n"); continue; }
+        if (d < 1 || d > __month_days(y, m)) { printf("  日期不合法！\n"); continue; }
+        break;
     }
-    // 输入月份
-    while (1) {
-        m = (int)get_input_long_long("  月 (1~12)", 1, 12);
-        if (m >= 1 && m <= 12) break;
-        printf("  月份不合法，请重新输入\n");
-    }
-    // 输入日期
-    while (1) {
-        d = (int)get_input_long_long("  日 (1~31)", 1, 31);
-        if (d >= 1 && d <= 31) break;
-        printf("  日期不合法，请重新输入\n");
-    }
-
     struct tm tm = {0};
     tm.tm_year = y - 1900;
     tm.tm_mon  = m - 1;

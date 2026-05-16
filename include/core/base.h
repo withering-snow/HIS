@@ -228,7 +228,7 @@ static void get_input_str(const char* prompt, char* dest, int max_len) { \
     while (1) {                                                     \
         printf("%s (限%d字符): ", prompt, max_len - 1);              \
         if (fgets(dest, max_len, stdin) == NULL) continue;          \
-                                                                     \
+                                                                      \
         size_t len = strlen(dest);                                  \
         if (len > 0 && dest[len - 1] != '\n') {                     \
             printf("错误：输入过长！请重新输入（最多%d字符）。\n", max_len - 1); \
@@ -236,12 +236,38 @@ static void get_input_str(const char* prompt, char* dest, int max_len) { \
             continue;                                               \
         }                                                           \
         if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0'; \
-                                                                     \
+                                                                      \
+        if (dest[0] == '\0') {                                      \
+            printf("错误：输入不能为空！\n");                          \
+            continue;                                               \
+        }                                                           \
+                                                                      \
         if (strchr(dest, '|')) {                                    \
             printf("错误：输入包含非法字符 '|'，请重新输入。\n");      \
             continue;                                               \
         }                                                           \
-                                                                     \
+                                                                      \
+        break;                                                      \
+    }                                                               \
+}                                                                   \
+static void get_input_str_allow_empty(const char* prompt, char* dest, int max_len) { \
+    while (1) {                                                     \
+        printf("%s (限%d字符): ", prompt, max_len - 1);              \
+        if (fgets(dest, max_len, stdin) == NULL) continue;          \
+                                                                      \
+        size_t len = strlen(dest);                                  \
+        if (len > 0 && dest[len - 1] != '\n') {                     \
+            printf("错误：输入过长！请重新输入（最多%d字符）。\n", max_len - 1); \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0'; \
+                                                                      \
+        if (strchr(dest, '|')) {                                    \
+            printf("错误：输入包含非法字符 '|'，请重新输入。\n");      \
+            continue;                                               \
+        }                                                           \
+                                                                      \
         break;                                                      \
     }                                                               \
 }                                                                   \
@@ -250,19 +276,27 @@ static long long get_input_long_long(const char* prompt,            \
     long long val;                                                  \
     while (1) {                                                     \
         printf("%s (%lld-%lld): ", prompt, min, max);               \
-        if (scanf("%lld", &val) != 1 || val < min || val > max) {   \
-            printf("请输入位于区间[%lld, %lld]的合法数字\n", min, max);  \
+        if (scanf("%lld", &val) != 1) {                             \
+            printf("请输入合法整数\n");                               \
             clear_space();                                          \
             continue;                                               \
         }                                                           \
-        clear_space();                                              \
+        int c = getchar();                                          \
+        if (c != '\n' && c != EOF) {                                \
+            printf("请输入合法整数，不能包含小数点或其它字符\n");       \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        if (val < min || val > max) {                               \
+            printf("请输入位于区间[%lld, %lld]的合法数字\n", min, max);  \
+            continue;                                               \
+        }                                                           \
         return val;                                                 \
     }                                                               \
 }                                                                   \
 static void press_enter() {                                         \
     printf("\n按回车继续...");                                       \
     clear_space();                                                  \
-    getchar();                                                      \
 }
 // ---------------- 工具 ---------------- //
 

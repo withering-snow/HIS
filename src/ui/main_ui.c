@@ -71,7 +71,7 @@ Status UI_main(){
                     }
                 }
                 printf("请输入密码（病人账户无需密码，直接回车即可）：\n");
-                get_input_str("", pw_buf, 20);
+                get_input_str_allow_empty("", pw_buf, 20);
                 Status login_status = Serv_account_signin(id_buf, pw_buf);
 
 
