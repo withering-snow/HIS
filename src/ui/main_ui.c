@@ -91,11 +91,30 @@ Status UI_main(){
                         gender g; char name[32]; char phone[20];
                         g = get_input_long_long("性别：\n0. 女\n1. 男\n", 0, 1);
 
-                        // 三级输入生日
+                        // 一次性输入8位日期
                         printf("出生日期：\n");
-                        int y = (int)get_input_long_long("  年 (1900~2026)", 1900, 2026);
-                        int m = (int)get_input_long_long("  月 (1~12)", 1, 12);
-                        int d = (int)get_input_long_long("  日 (1~31)", 1, 31);
+                        char date_buf[16];
+                        int y, m, d;
+                        while (1) {
+                            printf("  请输入8位数字日期 (如20061121): ");
+                            if (fgets(date_buf, 16, stdin) == NULL) continue;
+                            size_t len = strlen(date_buf);
+                            if (len > 0 && date_buf[len-1] == '\n') date_buf[len-1] = '\0';
+                            if (strlen(date_buf) != 8) {
+                                printf("  必须输入8位数字！\n");
+                                continue;
+                            }
+                            int ok = 1;
+                            for (int i = 0; i < 8; i++) {
+                                if (date_buf[i] < '0' || date_buf[i] > '9') { ok = 0; break; }
+                            }
+                            if (!ok) { printf("  只能包含数字！\n"); continue; }
+                            sscanf(date_buf, "%4d%2d%2d", &y, &m, &d);
+                            if (y < 1900 || y > 2026) { printf("  年份不合法 (1900~2026)！\n"); continue; }
+                            if (m < 1 || m > 12) { printf("  月份不合法 (1~12)！\n"); continue; }
+                            if (d < 1 || d > 31) { printf("  日期不合法！\n"); continue; }
+                            break;
+                        }
                         struct tm btm = {0};
                         btm.tm_year = y - 1900; btm.tm_mon = m - 1; btm.tm_mday = d;
                         long long birth_ts = (long long)mktime(&btm);
@@ -104,9 +123,13 @@ Status UI_main(){
                         get_input_str("姓名：\n", name, 32);
                         get_input_str("联系电话：\n", phone, 20);
 
-                        Serv_patient_signup(g, birth, name, phone, id_buf);
-                        Io_save();
-                        printf("账户创建成功！按回车键返回……\n");
+                        Status signup_status = Serv_patient_signup(g, birth, name, phone, id_buf);
+                        if (signup_status == HIS_OK) {
+                            Io_save();
+                            printf("账户创建成功！按回车键返回……\n");
+                        } else {
+                            printf("账户创建失败（可能身份证号已存在），请重试。按回车键返回……\n");
+                        }
                         clear_space();
                         CLEAN();
                     }

@@ -308,6 +308,24 @@ Status Rel_queue_call_reg(long long doc_id){
                 List_remove(tmp->queue, node);
                 Rel_doc rel_tmp = {pat_id, doc_id};
                 List_push_back(Rel_doc_seeing_list, &rel_tmp);
+
+                // 将挂号状态从 WAITING 改为 IN_PROGRESS
+                List_T records = Data_get_record();
+                void* ptr = List_first(records);
+                while(ptr != NULL){
+                    Record_T rec = *(Record_T*)ptr;
+                    if(!Rec_is_invalid(rec) && Rec_type(rec) == REC_REGISTRATION &&
+                        Rec_actor_id(rec) == pat_id)
+                    {
+                        DataRegistration* data = (DataRegistration*)Rec_detail(rec);
+                        if(data->doc_id == doc_id && data->status == WAITING){
+                            Rec_set_reg_status(rec, IN_PROGRESS);
+                            break;
+                        }
+                    }
+                    ptr = List_next(records);
+                }
+
                 return HIS_OK;
             }
             break;
@@ -316,6 +334,7 @@ Status Rel_queue_call_reg(long long doc_id){
     }
     return HIS_ERR_NOT_FOUND;
 }
+
 
 
 long long Rel_queue_cur_pat(long long doc_id){
@@ -438,12 +457,34 @@ void Rel_queue_update(){
             DataRegistration* data = (DataRegistration*)Rec_detail(record);
 
             // 如果目标日期已过，且状态还是 APPOINTMENT 或 WAITING，自动标记为 COMPLETED
-            if (data->target_date < today &&
-                (data->status == APPOINTMENT || data->status == WAITING))
+            if (data->status == APPOINTMENT || data->status == WAITING)
             {
-                Rec_set_reg_status(record, COMPLETED);
-                find_ptr = List_next(records);
-                continue;
+                bool expired = false;
+                if (data->target_date < today) {
+                    expired = true;
+                } else if (data->target_date == today && data->time_frame > 0) {
+                    // 同一天，检查时段是否已过
+                    time_t now_ts = Time_now();
+                    struct tm* now_tm = localtime(&now_ts);
+                    int cur_total_min = now_tm->tm_hour * 60 + now_tm->tm_min;
+                    int end_hour, end_min;
+                    if (data->time_frame <= 8) {
+                        end_hour = 8 + data->time_frame / 2;
+                        end_min = data->time_frame % 2 * 30;
+                    } else {
+                        end_hour = 13 + (data->time_frame - 8) / 2;
+                        end_min = (data->time_frame - 8) % 2 * 30;
+                    }
+                    int end_total_min = end_hour * 60 + end_min;
+                    if (cur_total_min >= end_total_min) {
+                        expired = true;
+                    }
+                }
+                if (expired) {
+                    Rec_set_reg_status(record, COMPLETED);
+                    find_ptr = List_next(records);
+                    continue;
+                }
             }
 
             // 只处理今天的记录

@@ -594,6 +594,33 @@ static Status Io_load_record()
             {
                 DataRegistration data;
                 fscanf(fp,"%lld|%d|%d|%d|%d\n", &data.doc_id, &data.sequence_no,&data.target_date,&data.time_frame,&data.status);
+                // 加载时自动将过期未就诊的挂号标记为 COMPLETED
+                if (data.status == APPOINTMENT || data.status == WAITING)
+                {
+                    int today = Time_to_int_date(Time_now());
+                    if (data.target_date < today) {
+                        // 日期已过
+                        data.status = COMPLETED;
+                    } else if (data.target_date == today && data.time_frame > 0) {
+                        // 同一天，检查时段是否已过
+                        time_t now_ts = Time_now();
+                        struct tm* now_tm = localtime(&now_ts);
+                        int cur_total_min = now_tm->tm_hour * 60 + now_tm->tm_min;
+                        // 计算该时段的结束时间
+                        int end_hour, end_min;
+                        if (data.time_frame <= 8) {
+                            end_hour = 8 + data.time_frame / 2;
+                            end_min = data.time_frame % 2 * 30;
+                        } else {
+                            end_hour = 13 + (data.time_frame - 8) / 2;
+                            end_min = (data.time_frame - 8) % 2 * 30;
+                        }
+                        int end_total_min = end_hour * 60 + end_min;
+                        if (cur_total_min >= end_total_min) {
+                            data.status = COMPLETED;
+                        }
+                    }
+                }
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;

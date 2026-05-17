@@ -101,10 +101,37 @@ List_T Serv_patient_day_slots(long long doc_id, int target_date) {
 
 Status Serv_patient_register(long long doc_id, int target_date, int time_frame){
 
+    // 校验医生ID是否有效
+    Doctor_T doc = (Doctor_T)Serv_helper_finder(doc_id, TYPE_DOCTOR);
+    if (doc == NULL) {
+        return HIS_ERR_NOT_FOUND;
+    }
+
+    // 校验是否过期（今天且非急诊，检查时段是否已过）
+    int today = Time_to_int_date(Time_now());
+    if (target_date == today && time_frame > 0) {
+        time_t now_ts = Time_now();
+        struct tm* now_tm = localtime(&now_ts);
+        int cur_total_min = now_tm->tm_hour * 60 + now_tm->tm_min;
+        int start_hour, start_min;
+        if (time_frame <= 8) {
+            start_hour = 8 + (time_frame - 1) / 2;
+            start_min = (time_frame - 1) % 2 * 30;
+        } else {
+            start_hour = 13 + (time_frame - 9) / 2;
+            start_min = (time_frame - 9) % 2 * 30;
+        }
+        int start_total_min = start_hour * 60 + start_min;
+        if (cur_total_min >= start_total_min) {
+            return HIS_ERR_EXPIRED;
+        }
+    }
+
     T* check = Serv_patient_get_slot_status(doc_id, target_date, time_frame);
     if (check->is_full) {
         return HIS_ERR_QUEUE_FULL;
     }
+
 
     int new_seq = check->registered + 1;
 
@@ -116,8 +143,7 @@ Status Serv_patient_register(long long doc_id, int target_date, int time_frame){
     // 绑定医患关系
     Rel_bind_doctor(Serv_account_cur_id(), doc_id);
 
-    Doctor_T doc = (Doctor_T)Serv_helper_finder(doc_id, TYPE_DOCTOR);
-    const char* doc_name = doc ? Doctor_name(doc) : "未知";
+    const char* doc_name = Doctor_name(doc);
     Log_printf(CLASS_PATIENT, Serv_account_cur_id(), "病人预约挂号 医生[%lld][%s] 日期[%d] 时段[%d]", doc_id, doc_name, target_date, time_frame);
     return HIS_OK;
 }
@@ -227,13 +253,37 @@ long long Serv_patient_get_fund(){
     return Fund_balance(fund);
 }
 
-void Serv_patient_signup(gender g, int birth, const char* name, const char* phone, const char* id_buf){
-    Patient_T pat = Patient_new(g, Int_date_to_time(birth), name, phone, id_buf);
-    List_push_back(Data_get_patient(), &pat);
+Status Serv_patient_signup(gender g, int birth, const char* name, const char* phone, const char* id_buf){
+    // 先检查身份证号是否已被注册（遍历 Patient 列表）
+    List_T pat_list = Data_get_patient();
+    void* pat_ptr = List_first(pat_list);
+    while (pat_ptr != NULL) {
+        Patient_T p = *(Patient_T*)pat_ptr;
+        if (strcmp(Patient_id_card(p), id_buf) == 0) {
+            return HIS_ERR_ALREADY_EXISTS; // 身份证号已注册
+        }
+        pat_ptr = List_next(pat_list);
+    }
 
-    Fund_T fund = Fund_new(Patient_id(pat));
+    // 先生成 Patient ID，再创建 Account（避免 Account 创建成功后 Patient/Fund 失败）
+    Patient_T pat = Patient_new(g, Int_date_to_time(birth), name, phone, id_buf);
+    long long new_id = Patient_id(pat);
+
+    // 先创建 Account（如果 Account 已存在则提前返回，不污染 Patient/Fund 列表）
+    Status s = Serv_account_signup(CLASS_PATIENT, new_id, name, NULL);
+    if (s != HIS_OK) {
+        Patient_free(&pat);
+        return s;
+    }
+
+    // Account 创建成功，再添加 Patient 和 Fund
+    List_push_back(Data_get_patient(), &pat);
+    Fund_T fund = Fund_new(new_id);
     List_push_back(Data_get_fund(), &fund);
 
-    Serv_account_signup(CLASS_PATIENT, Patient_id(pat), name, NULL);
-    Log_printf(CLASS_PATIENT, Patient_id(pat), "病人账户自助创建，同步创建 Patient_T Account_T Fund_T");
+    Log_printf(CLASS_PATIENT, new_id, "病人账户自助创建，同步创建 Patient_T Account_T Fund_T");
+    return HIS_OK;
 }
+
+
+

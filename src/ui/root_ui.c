@@ -126,7 +126,7 @@ static Status __patient() {
             // 先展示病人列表
             printf("当前病人列表：\n");
             __print_patient_list(Data_get_patient());
-            long long pat_id = get_input_long_long("请输入要修改的病人ID", 0, 999999);
+            long long pat_id = get_input_long_long("请输入要修改的病人ID", 1, 999999);
             List_T list = Data_get_patient();
             void* ptr = List_first(list);
             Patient_T target = NULL;
@@ -237,7 +237,7 @@ static Status __doctor() {
         else if (choice == 2) {
             printf("当前医生列表：\n");
             __print_doctor_list(Data_get_doctor());
-            long long id = get_input_long_long("输入要删除的医生ID", 0, 99999);
+            long long id = get_input_long_long("输入要删除的医生ID", 1, 99999);
             Status s = Serv_root_remove_doctor(id);
             if (s == HIS_OK) {
                 printf("删除成功！\n");
@@ -295,7 +295,7 @@ static Status __doctor() {
         else if (choice == 5) {
             CLEAN();
             printf("--- 修改医生信息 ---\n");
-            long long doc_id = get_input_long_long("请输入要修改的医生ID", 0, 999999);
+            long long doc_id = get_input_long_long("请输入要修改的医生ID", 1, 999999);
             List_T list = Data_get_doctor();
             void* ptr = List_first(list);
             Doctor_T target = NULL;
@@ -397,7 +397,7 @@ static Status __medicine() {
         }
         else if (choice == 2) {
             printf("（参考上方药品列表中的ID）\n");
-            long long mid = get_input_long_long("药品 ID", 0, 9999);
+            long long mid = get_input_long_long("药品 ID", 1, 9999);
             long long bprice = get_input_long_long("进价（分）", 0, 100000);
             int count = (int)get_input_long_long("数量", 1, 1000);
             long long expire_ts = __input_date("过期日期");
@@ -412,7 +412,7 @@ static Status __medicine() {
         }
         else if (choice == 3) {
             printf("（参考上方药品列表中的ID）\n");
-            long long mid = get_input_long_long("删除药品 ID", 0, 9999);
+            long long mid = get_input_long_long("删除药品 ID", 1, 9999);
             Status s = Serv_root_remove_medicine(mid);
             if (s == HIS_OK) {
                 printf("删除成功！\n");
@@ -446,7 +446,7 @@ static Status __medicine() {
         else if (choice == 5) {
             CLEAN();
             printf("--- 修改药品信息 ---\n");
-            long long mid = get_input_long_long("请输入要修改的药品ID", 0, 9999);
+            long long mid = get_input_long_long("请输入要修改的药品ID", 1, 9999);
             List_T list = Data_get_medicine();
             void* ptr = List_first(list);
             Medicine_T target = NULL;
@@ -487,7 +487,7 @@ static Status __medicine() {
         else if (choice == 6) {
             CLEAN();
             printf("--- 查看批次 ---\n");
-            long long mid = get_input_long_long("药品 ID", 0, 9999);
+            long long mid = get_input_long_long("药品 ID", 1, 9999);
             List_T med_list = Data_get_medicine();
             void* mp = List_first(med_list);
             Medicine_T target = NULL;
@@ -530,7 +530,7 @@ static Status __medicine() {
         else if (choice == 7) {
             CLEAN();
             printf("--- 报废批次 ---\n");
-            long long mid = get_input_long_long("药品 ID", 0, 9999);
+            long long mid = get_input_long_long("药品 ID", 1, 9999);
             List_T med_list = Data_get_medicine();
             void* mp = List_first(med_list);
             Medicine_T target = NULL;
@@ -657,7 +657,7 @@ static Status __ward() {
             CLEAN();
             printf("--- 删除病房 ---\n");
             printf("（参考上方病房列表中的ID）\n");
-            long long ward_id = get_input_long_long("请输入要删除的病房ID", 0, 99999);
+            long long ward_id = get_input_long_long("请输入要删除的病房ID", 1, 99999);
             Status s = Serv_root_remove_ward(ward_id);
             if (s == HIS_OK) {
                 printf("删除成功！\n");
@@ -669,7 +669,7 @@ static Status __ward() {
         else if (choice == 3) {
             CLEAN();
             printf("--- 修改病房信息 ---\n");
-            long long ward_id = get_input_long_long("请输入要修改的病房ID", 0, 99999);
+            long long ward_id = get_input_long_long("请输入要修改的病房ID", 1, 99999);
             List_T list = Data_get_ward();
             void* ptr = List_first(list);
             Ward_T target = NULL;
@@ -711,7 +711,7 @@ static Status __ward() {
         else if (choice == 4) {
             CLEAN();
             printf("--- 查看床位明细 ---\n");
-            long long ward_id = get_input_long_long("请输入病房ID", 0, 99999);
+            long long ward_id = get_input_long_long("请输入病房ID", 1, 99999);
             List_T list = Data_get_ward();
             void* ptr = List_first(list);
             Ward_T target = NULL;
@@ -970,7 +970,7 @@ Status UI_root_menu() {
                 }
             }
             else if (pw_choice == 2) {
-                long long doc_id = get_input_long_long("请输入要重置密码的医生ID", 0, 999999);
+                long long doc_id = get_input_long_long("请输入要重置密码的医生ID", 1, 999999);
                 Account_T acc = (Account_T)Serv_helper_finder(doc_id, TYPE_ACCOUNT);
                 if (acc == NULL) {
                     printf("未找到该医生账号\n");

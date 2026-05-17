@@ -61,6 +61,8 @@ typedef enum {
     //Account（账号）错误
     HIS_ERR_PASSWORD_MISMATCH = -72,
     HIS_ERR_QUEUE_FULL = -73,               // 挂号队列已满
+    HIS_ERR_EXPIRED = -74,                  // 预约时段已过期
+
 
     //Record（记录）错误
     HIS_ERR_STATUS_ERROR = -80,
@@ -189,7 +191,7 @@ typedef int (*compare)(const void *a, const void *b);
  * 若已经达到上限，会返回-1
  */
 #define NEW_ID() \
-    ((_id_counter < LLONG_MAX)? (_id_counter++): INVALID_ID)
+    ((_id_counter < LLONG_MAX)? (++_id_counter): INVALID_ID)
 
 /**
  * @brief 加载实体时，需要使用此函数用于记录当前最大id
@@ -197,8 +199,9 @@ typedef int (*compare)(const void *a, const void *b);
  */
 #define LOAD_ID(id) \
     do{ \
-        if(id > _id_counter) _id_counter = id; \
+        if(id >= _id_counter) _id_counter = id; \
     }while(0)
+
 
 
 /**

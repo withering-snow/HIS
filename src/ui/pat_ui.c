@@ -85,6 +85,7 @@ static long long __input_date(const char* prompt) {
 
 // 主菜单
 Status UI_pat_menu() {
+    UI_pat_should_continue = true;
     while (UI_pat_should_continue) {
         CLEAN();
         printf("=======================\n");
@@ -308,7 +309,7 @@ Status UI_pat_menu() {
                 }
 
                 // 3. 选择医生
-                long long doc_id = get_input_long_long("请选择医生ID", 0, 999999);
+                long long doc_id = get_input_long_long("请选择医生ID", 1, 999999);
 
                 // 4. 选择日期（只允许预约3天内）
                 int today = Time_to_int_date(Time_now());
@@ -325,53 +326,10 @@ Status UI_pat_menu() {
                 long long date_choice = get_input_long_long("请选择", 1, 3);
                 int target_date = today + (int)(date_choice - 1);
 
-                // 5. 选择时间段（如果是今天，过滤已过时段）
-                // 每个时段的结束小时：急诊0点结束，1~4时段结束于12点，5~8结束于12点，9~16结束于17点
-                // 简化判断：时段0(急诊)全天可约；时段1~8(上午)结束于12点；时段9~16(下午)结束于17点
-                int min_tf = 0, max_tf = 16;
-                if (target_date == today) {
-                    // 获取当前小时
-                    time_t now_ts = Time_now();
-                    struct tm* now_tm = localtime(&now_ts);
-                    int cur_hour = now_tm->tm_hour;
-                    int cur_min = now_tm->tm_min;
-
-                    // 根据当前时间计算最小可选时段
-                    // 时段0(急诊)始终可选
-                    // 时段1(8:00-8:30): 如果当前>=8:30则不可选
-                    // 时段2(8:30-9:00): 如果当前>=9:00则不可选 ... 以此类推
-                    // 上午时段1~8: 开始时间 = 8:00 + (i-1)*30分钟
-                    // 下午时段9~16: 开始时间 = 13:00 + (i-9)*30分钟
-                    int cur_total_min = cur_hour * 60 + cur_min;
-                    min_tf = 0; // 急诊始终可选
-                    for (int i = 1; i <= 16; i++) {
-                        int start_hour, start_min;
-                        if (i <= 8) {
-                            start_hour = 8 + (i - 1) / 2;
-                            start_min = (i - 1) % 2 * 30;
-                        } else {
-                            start_hour = 13 + (i - 9) / 2;
-                            start_min = (i - 9) % 2 * 30;
-                        }
-                        int start_total_min = start_hour * 60 + start_min;
-                        // 如果该时段开始时间在当前时间之后，则可用
-                        if (start_total_min > cur_total_min) {
-                            min_tf = i;
-                            break;
-                        }
-                    }
-                    if (min_tf == 0 && cur_total_min >= 0) {
-                        // 所有时段都过了，但急诊还是可以选
-                        min_tf = 0;
-                    }
-                }
-
+                // 5. 选择时间段（全部显示，由后端校验是否过期）
                 printf("\n选择时间段：\n");
-                printf(" 0 - 急诊");
-                if (target_date == today && min_tf > 0) printf(" (已过时段已隐藏)");
-                printf("\n");
+                printf(" 0 - 急诊\n");
                 for (int i = 1; i <= 16; i++) {
-                    if (target_date == today && i < min_tf) continue; // 跳过已过时段
                     int start_hour, start_min, end_hour, end_min;
                     if (i <= 8) {
                         start_hour = 8 + (i - 1) / 2;
@@ -387,20 +345,24 @@ Status UI_pat_menu() {
                     printf(" %2d - %02d:%02d-%02d:%02d", i, start_hour, start_min, end_hour, end_min);
                     if (i % 4 == 0) printf("\n");
                 }
-                if (target_date != today || 16 >= min_tf) {
-                    if (16 % 4 != 0) printf("\n");
-                }
-                int time_frame = (int)get_input_long_long("请选择", min_tf, 16);
+                if (16 % 4 != 0) printf("\n");
+                int time_frame = (int)get_input_long_long("请选择", 0, 16);
 
-                // 6. 检查号源并预约
+                // 6. 检查号源并预约（后端会校验是否过期）
                 Status s = Serv_patient_register(doc_id, target_date, time_frame);
+
                 if (s == HIS_OK) {
                     printf("预约成功！\n");
                 } else if (s == HIS_ERR_QUEUE_FULL) {
                     printf("该时段已满，请选择其他时段\n");
+                } else if (s == HIS_ERR_NOT_FOUND) {
+                    printf("医生ID无效，请选择列表中的医生\n");
+                } else if (s == HIS_ERR_EXPIRED) {
+                    printf("该时段已过，请选择其他时段\n");
                 } else {
                     printf("预约失败！\n");
                 }
+
 
                 List_free(&available);
                 break;
@@ -467,7 +429,7 @@ Status UI_pat_menu() {
                     }
                     if (!has_appoint) printf("  暂无待签到的预约记录\n");
 
-                    long long doc_id = get_input_long_long("请输入要签到的医生ID", 0, 999999);
+                    long long doc_id = get_input_long_long("请输入要签到的医生ID", 1, 999999);
                     Status s = Serv_patient_checkin(doc_id);
                     if (s == HIS_OK) {
                         printf("签到成功！请等待医生叫号。\n");

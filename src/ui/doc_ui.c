@@ -104,7 +104,10 @@ Status UI_doc_menu() {
                 get_input_str("检查项目名称", exam_name, 64);
                 Status s = Serv_doc_exam(cost, exam_name);
                 if (s == HIS_OK) printf("检查已开具！\n");
+                else if (s == HIS_ERR_INSUFFICIENT_FUNDS) printf("余额不足！\n");
+                else if (s == HIS_ERR_NO_FUNDS) printf("该病人没有资金账户\n");
                 else printf("开具检查失败\n");
+
             }
         }
         else if (choice == 5) {
@@ -130,7 +133,7 @@ Status UI_doc_menu() {
                     mp = List_next(med_list);
                 }
 
-                long long med_id = get_input_long_long("请输入药品ID", 0, 999999);
+                long long med_id = get_input_long_long("请输入药品ID", 1, 999999);
                 int amount = (int)get_input_long_long("数量", 1, 1000);
                 // 通过ID查找药品名
                 Medicine_T target = (Medicine_T)Serv_helper_finder(med_id, TYPE_MEDICINE);
@@ -144,9 +147,14 @@ Status UI_doc_menu() {
                         printf("未找到该药品\n");
                     } else if (s == HIS_ERR_OUT_OF_STOCK) {
                         printf("库存不足！\n");
+                    } else if (s == HIS_ERR_INSUFFICIENT_FUNDS) {
+                        printf("余额不足！\n");
+                    } else if (s == HIS_ERR_NO_FUNDS) {
+                        printf("该病人没有资金账户\n");
                     } else {
                         printf("开药失败\n");
                     }
+
                 }
             }
         }
@@ -232,7 +240,7 @@ Status UI_doc_menu() {
             }
             if (!has_inpatient) printf("  暂无住院病人\n");
 
-            long long id = get_input_long_long("请输入要办理出院的病人ID", 0, 99999);
+            long long id = get_input_long_long("请输入要办理出院的病人ID", 1, 99999);
             Status s = Serv_doc_discharge(id);
             if (s == HIS_OK) printf("出院办理成功！\n");
             else if (s == HIS_ERR_NOT_FOUND) printf("未找到该病人的住院记录\n");
@@ -297,7 +305,7 @@ Status UI_doc_menu() {
             }
             if (!has_inpatient) printf("  暂无住院病人\n");
 
-            long long pat_id = get_input_long_long("请输入要换床的病人ID", 0, 99999);
+            long long pat_id = get_input_long_long("请输入要换床的病人ID", 1, 99999);
             // 展示病房列表
             printf("\n--- 病房列表 ---\n");
             List_T ward_list = Data_get_ward();
@@ -386,7 +394,7 @@ Status UI_doc_menu() {
                 pp = List_next(pat_list);
             }
 
-            long long pat_id = get_input_long_long("请输入病人ID", 0, 99999);
+            long long pat_id = get_input_long_long("请输入病人ID", 1, 99999);
             // 展示医生列表
             printf("\n--- 医生列表 ---\n");
             List_T doc_list = Data_get_doctor();
@@ -407,7 +415,7 @@ Status UI_doc_menu() {
                     Doctor_id(d), Doctor_name(d), department_name(Doctor_dept(d)), title_str);
                 dp = List_next(doc_list);
             }
-            long long to_doc_id = get_input_long_long("目标医生ID", 0, 999999);
+            long long to_doc_id = get_input_long_long("目标医生ID", 1, 999999);
             Status s = Serv_doc_change_doc(pat_id, to_doc_id);
             if (s == HIS_OK) printf("换医生成功！\n");
             else if (s == HIS_ERR_NOT_FOUND) printf("未找到该病人或医生\n");
