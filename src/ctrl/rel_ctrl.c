@@ -1,9 +1,13 @@
 #include <rel_ctrl.h>
 
+// 两个静态的关系表
 static List_T Rel_doc_list = NULL;
 static List_T Rel_ward_list = NULL;
 
-static List_T Rel_queue_list = NULL;
+// 三个挂号相关的动态队列与表
+static List_T Rel_appoint_queue = NULL;
+static List_T Rel_waiting_queue = NULL;
+static List_T Rel_doc_seeing_list = NULL;
 
 
 
@@ -15,15 +19,30 @@ void Rel_init(){
 }
 
 static void __queue_free(){
-    if (Rel_queue_list != NULL) {
-        Rel_queue* tmp = List_first(Rel_queue_list);
+    if (Rel_appoint_queue != NULL) {
+        Rel_queue* tmp = List_first(Rel_appoint_queue);
         while (tmp != NULL) {
             if (tmp->queue) {
                 List_free(&(tmp->queue));
             }
-            tmp = List_next(Rel_queue_list);
+            tmp = List_next(Rel_appoint_queue);
         }
-        List_free(& Rel_queue_list);
+        List_free(& Rel_appoint_queue);
+    }
+
+    if (Rel_waiting_queue != NULL){
+        Rel_queue* tmp = List_first(Rel_waiting_queue);
+        while (tmp != NULL){
+            if (tmp->queue){
+                List_free(&(tmp->queue));
+            }
+            tmp = List_next(Rel_waiting_queue);
+        }
+        List_free(& Rel_waiting_queue);
+    }
+
+    if (Rel_doc_seeing_list != NULL){
+        List_free(& Rel_doc_seeing_list);
     }
 }
 
@@ -33,7 +52,13 @@ void Rel_destroy(){
     __queue_free();
 }
 
+List_T Rel_doc_get(){
+    return Rel_doc_list;
+}
 
+List_T Rel_ward_get(){
+    return Rel_ward_list;
+}
 
 
 Status Rel_bind_doctor(long long patient_id, long long doctor_id){
@@ -149,15 +174,21 @@ bool Rel_has_doctor(long long patient_id){
 
 
 
-Status Rel_queue_push(long long doc_id, long long pat_id, int sequence_no, int time_frame){
-    Rel_queue* tmp = List_first(Rel_queue_list);
+Status Rel_appoint_queue_push(long long doc_id, long long pat_id, int sequence_no, int time_frame){
+    Rel_queue* tmp = List_first(Rel_appoint_queue);
 
     while(tmp != NULL){
         if(tmp->doc_id == doc_id){
-            Rel_queue_node new_node = {pat_id, (time_frame * 10000) + sequence_no};
+            Rel_queue_node new_node = {
+                pat_id, (time_frame * 10000) + sequence_no,
+                sequence_no, time_frame}
+            ;
 
             Rel_queue_node* node = List_first(tmp->queue);
             while(node != NULL){
+                if(node->pat_id == pat_id){
+                    return HIS_ERR_ALREADY_EXISTS;
+                }
                 if(node->priority_score >= new_node.priority_score){
                     break;
                 }
@@ -167,23 +198,67 @@ Status Rel_queue_push(long long doc_id, long long pat_id, int sequence_no, int t
 
             return HIS_OK;
         }
-        tmp = List_next(Rel_queue_list);
+        tmp = List_next(Rel_appoint_queue);
     }
 
     Rel_queue new_queue;
     new_queue.doc_id = doc_id;
     new_queue.queue = List_new(sizeof(Rel_queue_node));
-    Rel_queue_node new_node = {pat_id, (time_frame * 10000) + sequence_no};
+    Rel_queue_node new_node = {
+        pat_id, (time_frame * 10000) + sequence_no,
+        sequence_no, time_frame}
+    ;
     List_push_back(new_queue.queue, &new_node);
-    List_push_back(Rel_queue_list, &new_queue);
+    List_push_back(Rel_appoint_queue, &new_queue);
     return HIS_OK;
 }
 
-Status Rel_queue_remove(long long doc_id, long long pat_id){
-    Rel_queue* tmp = List_first(Rel_queue_list);
+
+Status Rel_waiting_queue_push(long long doc_id, long long pat_id, int sequence_no, int time_frame){
+    Rel_queue* tmp = List_first(Rel_waiting_queue);
 
     while(tmp != NULL){
+        if(tmp->doc_id == doc_id){
+            Rel_queue_node new_node = {
+                pat_id, (time_frame * 10000) + sequence_no,
+                sequence_no, time_frame}
+            ;
 
+            Rel_queue_node* node = List_first(tmp->queue);
+            while(node != NULL){
+                if(node->pat_id == pat_id){
+                    return HIS_ERR_ALREADY_EXISTS;
+                }
+                if(node->priority_score >= new_node.priority_score){
+                    break;
+                }
+                node = List_next(tmp->queue);
+            }
+            List_insert_before_cursor(tmp->queue, &new_node);
+
+            return HIS_OK;
+        }
+        tmp = List_next(Rel_waiting_queue);
+    }
+
+    Rel_queue new_queue;
+    new_queue.doc_id = doc_id;
+    new_queue.queue = List_new(sizeof(Rel_queue_node));
+    Rel_queue_node new_node = {
+        pat_id, (time_frame * 10000) + sequence_no,
+        sequence_no, time_frame}
+    ;
+    List_push_back(new_queue.queue, &new_node);
+    List_push_back(Rel_waiting_queue, &new_queue);
+    return HIS_OK;
+}
+
+
+
+
+Status Rel_queue_remove(long long doc_id, long long pat_id){
+    Rel_queue* tmp = List_first(Rel_appoint_queue);
+    while(tmp != NULL){
         if(tmp->doc_id == doc_id){
             Rel_queue_node* node = List_first(tmp->queue);
             while(node != NULL){
@@ -195,13 +270,35 @@ Status Rel_queue_remove(long long doc_id, long long pat_id){
             }
             break;
         }
-        tmp = List_next(Rel_queue_list);
+        tmp = List_next(Rel_appoint_queue);
+    }
+
+    tmp = List_first(Rel_waiting_queue);
+    while(tmp != NULL){
+        if(tmp->doc_id == doc_id){
+            Rel_queue_node* node = List_first(tmp->queue);
+            while(node != NULL){
+                if(node->pat_id == pat_id){
+                    List_remove(tmp->queue, node);
+                    return HIS_OK;
+                }
+                node = List_next(tmp->queue);
+            }
+            break;
+        }
+        tmp = List_next(Rel_waiting_queue);
     }
     return HIS_ERR_NOT_FOUND;
 }
 
-long long Rel_queue_pop(long long doc_id){
-    Rel_queue* tmp = List_first(Rel_queue_list);
+
+
+
+Status Rel_queue_call_reg(long long doc_id){
+    Rel_queue* tmp = List_first(Rel_waiting_queue);
+    if(Rel_queue_cur_pat(doc_id) != INVALID_ID){
+        return HIS_ERR_ALREADY_EXISTS;
+    }
 
     while(tmp != NULL){
         if(tmp->doc_id == doc_id){
@@ -209,36 +306,144 @@ long long Rel_queue_pop(long long doc_id){
             if(node != NULL){
                 long long pat_id = node->pat_id;
                 List_remove(tmp->queue, node);
-                return pat_id;
+                Rel_doc rel_tmp = {pat_id, doc_id};
+                List_push_back(Rel_doc_seeing_list, &rel_tmp);
+
+                // 将挂号状态从 WAITING 改为 IN_PROGRESS
+                List_T records = Data_get_record();
+                void* ptr = List_first(records);
+                while(ptr != NULL){
+                    Record_T rec = *(Record_T*)ptr;
+                    if(!Rec_is_invalid(rec) && Rec_type(rec) == REC_REGISTRATION &&
+                        Rec_actor_id(rec) == pat_id)
+                    {
+                        DataRegistration* data = (DataRegistration*)Rec_detail(rec);
+                        if(data->doc_id == doc_id && data->status == WAITING){
+                            Rec_set_reg_status(rec, IN_PROGRESS);
+                            break;
+                        }
+                    }
+                    ptr = List_next(records);
+                }
+
+                return HIS_OK;
             }
             break;
         }
-        tmp = List_next(Rel_queue_list);
+        tmp = List_next(Rel_waiting_queue);
     }
-    return -1LL; //TODO: INVALID_ID
+    return HIS_ERR_NOT_FOUND;
 }
 
-List_T Rel_queue_get_all(long long doc_id){
-    Rel_queue* tmp = List_first(Rel_queue_list);
-    List_T list = List_new(sizeof(long long));
+
+
+long long Rel_queue_cur_pat(long long doc_id){
+    Rel_doc* find_ptr = List_first(Rel_doc_seeing_list);
+    while(find_ptr != NULL){
+        if(find_ptr->doc_id == doc_id){
+            return find_ptr->pat_id;
+        }
+        find_ptr = List_next(Rel_doc_seeing_list);
+    }
+    return INVALID_ID;
+}
+
+
+Status Rel_queue_end_reg(long long doc_id){
+    Rel_doc* find_ptr = List_first(Rel_doc_seeing_list);
+    while(find_ptr != NULL){
+        if(find_ptr->doc_id == doc_id){
+            List_remove(Rel_doc_seeing_list, find_ptr);
+            return HIS_OK;
+        }
+        find_ptr = List_next(Rel_doc_seeing_list);
+    }
+    return HIS_ERR_NOT_FOUND;
+}
+
+
+Status Rel_queue_check_in(long long doc_id, long long pat_id){
+    Rel_queue* queue_ptr = List_first(Rel_appoint_queue);
+    List_T queue = NULL;
+    while(queue_ptr != NULL){
+        if(queue_ptr->doc_id == doc_id){
+            queue = queue_ptr->queue;
+            break;
+        }
+        queue_ptr = List_next(Rel_appoint_queue);
+    }
+    if(queue == NULL){
+        return HIS_ERR_NOT_FOUND;
+    }
+
+    Rel_queue_node* node_ptr = List_first(queue);
+    Rel_queue_node tmp = {}; bool is_found = false;
+    while(node_ptr != NULL){
+        if(node_ptr->pat_id == pat_id){
+            tmp = *node_ptr; is_found = true;
+            List_remove(queue, node_ptr);
+            break;
+        }
+        node_ptr = List_next(queue);
+    }
+    if(!is_found){
+        return HIS_ERR_NOT_FOUND;
+    }
+
+    Rel_waiting_queue_push(doc_id, pat_id, tmp.sequence_no, tmp.time_frame);
+    return HIS_OK;
+}
+
+
+
+
+List_T Rel_queue_get_appoint(long long doc_id){
+    Rel_queue* tmp = List_first(Rel_appoint_queue);
+    List_T list = List_new(sizeof(RelQueueDataPackage));
 
     while(tmp != NULL){
         if(tmp->doc_id == doc_id){
             Rel_queue_node* node = List_first(tmp->queue);
             while(node != NULL){
-                List_push_back(list, &(node->pat_id));
+                RelQueueDataPackage pkg = {node->pat_id, node->sequence_no, node->time_frame};
+                List_push_back(list, &pkg);
                 node = List_next(tmp->queue);
             }
             break;
         }
-        tmp = List_next(Rel_queue_list);
+        tmp = List_next(Rel_appoint_queue);
     }
     return list;
 }
 
+
+List_T Rel_queue_get_waiting(long long doc_id){
+    Rel_queue* tmp = List_first(Rel_waiting_queue);
+    List_T list = List_new(sizeof(RelQueueDataPackage));
+
+    while(tmp != NULL){
+        if(tmp->doc_id == doc_id){
+            Rel_queue_node* node = List_first(tmp->queue);
+            while(node != NULL){
+                RelQueueDataPackage pkg = {node->pat_id, node->sequence_no, node->time_frame};
+                List_push_back(list, &pkg);
+                node = List_next(tmp->queue);
+            }
+            break;
+        }
+        tmp = List_next(Rel_waiting_queue);
+    }
+    return list;
+}
+
+
+
+
 void Rel_queue_update(){
     __queue_free();
-    Rel_queue_list = List_new(sizeof(Rel_queue));
+    Rel_waiting_queue = List_new(sizeof(Rel_queue));
+    Rel_appoint_queue = List_new(sizeof(Rel_queue));
+    Rel_doc_seeing_list = List_new(sizeof(Rel_doc));
 
     List_T records = Data_get_record();
     int today = Time_to_int_date(Time_now());
@@ -247,13 +452,62 @@ void Rel_queue_update(){
         Record_T record = *((Record_T*)find_ptr);
 
         if( Rec_is_invalid(record) == false &&
-            Rec_type(record) == REC_REGISTRATION &&
-            ((DataRegistration*)Rec_detail(record))->target_date == today)
+            Rec_type(record) == REC_REGISTRATION)
         {
             DataRegistration* data = (DataRegistration*)Rec_detail(record);
-            Rel_queue_push(data->doc_id, Rec_actor_id(record), data->sequence_no, data->time_frame);
+
+            // 如果目标日期已过，且状态还是 APPOINTMENT 或 WAITING，自动标记为 COMPLETED
+            if (data->status == APPOINTMENT || data->status == WAITING)
+            {
+                bool expired = false;
+                if (data->target_date < today) {
+                    expired = true;
+                } else if (data->target_date == today && data->time_frame > 0) {
+                    // 同一天，检查时段是否已过
+                    time_t now_ts = Time_now();
+                    struct tm* now_tm = localtime(&now_ts);
+                    int cur_total_min = now_tm->tm_hour * 60 + now_tm->tm_min;
+                    int end_hour, end_min;
+                    if (data->time_frame <= 8) {
+                        end_hour = 8 + data->time_frame / 2;
+                        end_min = data->time_frame % 2 * 30;
+                    } else {
+                        end_hour = 13 + (data->time_frame - 8) / 2;
+                        end_min = (data->time_frame - 8) % 2 * 30;
+                    }
+                    int end_total_min = end_hour * 60 + end_min;
+                    if (cur_total_min >= end_total_min) {
+                        expired = true;
+                    }
+                }
+                if (expired) {
+                    Rec_set_reg_status(record, COMPLETED);
+                    find_ptr = List_next(records);
+                    continue;
+                }
+            }
+
+            // 只处理今天的记录
+            if (data->target_date == today)
+            {
+                switch(data->status){
+                    case APPOINTMENT:
+                        Rel_appoint_queue_push(data->doc_id, Rec_actor_id(record),
+                            data->sequence_no, data->time_frame);
+                        break;
+                    case WAITING:
+                        Rel_waiting_queue_push(data->doc_id, Rec_actor_id(record),
+                            data->sequence_no, data->time_frame);
+                        break;
+                    case IN_PROGRESS:
+                        Rel_doc rel_tmp = {Rec_actor_id(record), data->doc_id};
+                        List_push_back(Rel_doc_seeing_list, &rel_tmp);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
         find_ptr = List_next(records);
     }
-
 }

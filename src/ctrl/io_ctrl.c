@@ -1,10 +1,10 @@
 #include <io_ctrl.h>
 
-
-
-
-// TODO： 临时函数，解决从表返回值后删除
-static List_T __tmp_list();
+#ifdef _WIN32
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 
 
 
@@ -51,7 +51,7 @@ static Status Io_load_patient()
     char name[32]; char phone[20]; char id_card[20];
 
     while (
-        fscanf(fp, "%lld|%d|%lld|%31[^|]|%19[^|]|%19[^|]\n",
+        fscanf(fp, "%lld|%d|%lld|%31[^|]|%19[^|]|%19[^|\r\n]\n",
             &id, &gender, &birth_ts, name, phone, id_card)
             == 6)
     {
@@ -75,7 +75,7 @@ static Status Io_save_doctor()
     {
         return HIS_ERR_IO_FAILURE;
     }
-    fprintf(fp,"ID|Gender|Birth_TS|Is_Active|Debt|Title|Name|Phone|ID_Card|Reg_Fee\n");
+    fprintf(fp,"ID|Gender|Birth_TS|Is_Active|Dept|Title|Name|Phone|ID_Card|Reg_Fee\n");
     List_T List_doctor = Data_get_doctor();
     void* doc_ptr = List_first(List_doctor);
     while (doc_ptr != NULL)
@@ -191,6 +191,7 @@ static Status Io_save_medicine()
     {
         return HIS_ERR_IO_FAILURE;
     }
+    fprintf(fp,"Med_id|Cur_price|Total_remain|Name\n");
     List_T List_med = Data_get_medicine();
     void* med_ptr = List_first(List_med);
 
@@ -244,31 +245,48 @@ static Status Io_load_medicine()
 
     Medicine_T recent_med = NULL;  char type = 'M';
 
-    while (fscanf(fp, "%c|", &type))
+    while (fscanf(fp, " %c|", &type) == 1)
     {
         if (type == 'M')
         {
             long long   id;           long long   cur_price;
             int         total_remain; char        name[32];
-            if (fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &id,&cur_price, &total_remain, name) != 4)
+            if (fscanf(fp,"%lld|%lld|%d|%31[^|\n]\n", &id,&cur_price, &total_remain, name) != 4)
             {
-                return HIS_ERR_IO_FAILURE;
+                // 跳过损坏的行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
             }
             Medicine_T medicine = Medicine_load(id, cur_price,total_remain,name);
             recent_med = medicine;
             List_push_back(List_med, &medicine);
         }
-        else
+        else if (type == 'B')
         {
+            if (recent_med == NULL) {
+                // 没有对应的主表记录，跳过此行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
+            }
             MedicineBatch bat;
-            fscanf(fp, "%lld|%lld|%lld|%d|%d|%31[^|]\n",
+            memset(&bat, 0, sizeof(bat));
+            if (fscanf(fp, "%lld|%lld|%lld|%d|%d|%31[^|\n]\n",
                 &bat.id,
                 &bat.buy_price,
                 &bat.expire_ts,
                 &bat.remain,
                 &bat.status,
-                bat.batch_no);
+                bat.batch_no) != 6)
+            {
+                // 跳过损坏的行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
+            }
             List_push_back(Medicine_batches(recent_med), &bat);
+        }
+        else {
+            // 未知类型，跳过整行
+            fscanf(fp, "%*[^\n]\n");
         }
     }
     fclose(fp);
@@ -351,10 +369,11 @@ static Status Io_save_ward()
     char dir[32];
     snprintf(dir, sizeof(dir), "data%cWard.txt", SEP);
 
-    FILE *fp = fopen(dir, "r");
+    FILE *fp = fopen(dir, "w");
     if (fp == NULL){
         return HIS_ERR_IO_FAILURE;
     }
+    fprintf(fp, "Ward_id|Dept|Daily_Cost|Bed_Count|Empty_Count|Ward_Name\n");
     List_T List_ward = Data_get_ward();
     void* ward_ptr = List_first(List_ward);
 
@@ -362,8 +381,8 @@ static Status Io_save_ward()
     {
         Ward_T ward = *(Ward_T* )ward_ptr;
 
-        fprintf(fp, "W|%lld|%d|%lld|%d|%d\n",Ward_id(ward),Ward_dept(ward),
-        Ward_daily_cost(ward),Ward_bed_count(ward),Ward_empty_count(ward));
+        fprintf(fp, "W|%lld|%d|%lld|%d|%d|%s\n",Ward_id(ward),Ward_dept(ward),
+        Ward_daily_cost(ward),Ward_bed_count(ward),Ward_empty_count(ward),Ward_name(ward));
 
 
         List_T List_bed = Ward_beds(ward);
@@ -407,7 +426,7 @@ static Status Io_load_ward()
 
     Ward_T recent_ward = NULL;char type = 'W';
 
-    while (fscanf(fp,"%c|",&type))
+    while (fscanf(fp," %c|",&type) == 1)
     {
         if (type=='W')
         {
@@ -416,23 +435,36 @@ static Status Io_load_ward()
             long long   daily_cost;
             int         bed_count;
             int         empty_count;
-            if (fscanf(fp,"W|%lld|%d|%lld|%d|%d\n",&id,&dept,&daily_cost,&bed_count,&empty_count)!=5)
+            char        ward_name[32];
+            if (fscanf(fp,"%lld|%d|%lld|%d|%d|%31[^|\n]\n",&id,&dept,&daily_cost,&bed_count,&empty_count,ward_name)!=6)
             {
                 return HIS_ERR_IO_FAILURE;
             }
-            Ward_T ward = Ward_load(id,dept,daily_cost);
+            Ward_T ward = Ward_load(id,dept,daily_cost,ward_name);
             recent_ward = ward;
             List_push_back(List_ward, &ward);
         }
-        else
+        else if (type == 'B')
         {
             Bed_T bed ;
-            fscanf(fp, "B|%d|%lld|%d|%lld|\n",
+            memset(&bed, 0, sizeof(bed));
+            if (fscanf(fp, "%d|%lld|%d|%lld|\n",
                 &bed.bed_label,
                 &bed.pat_id,
                 &bed.status,
-                &bed.start_ts);
-            List_push_back(Ward_beds(recent_ward), &bed);
+                &bed.start_ts) != 4)
+            {
+                // 跳过损坏的行
+                fscanf(fp, "%*[^\n]\n");
+                continue;
+            }
+            if (recent_ward != NULL) {
+                Ward_bed_load(recent_ward, bed.bed_label, bed.pat_id, (BedStatus)bed.status, bed.start_ts);
+            }
+        }
+        else {
+            // 未知类型，跳过整行
+            fscanf(fp, "%*[^\n]\n");
         }
     }
     fclose(fp);
@@ -463,7 +495,7 @@ static Status Io_save_record()
         case REC_REGISTRATION:
             {
                 DataRegistration* data = (DataRegistration*)Rec_detail(rec);
-                fprintf(fp,"%lld|%d|%d|%d\n",data->doc_id,data->sequence_no,data->target_date,data->time_frame);
+                fprintf(fp,"%lld|%d|%d|%d|%d\n",data->doc_id,data->sequence_no,data->target_date,data->time_frame,data->status);
                 break;
             }
 
@@ -488,7 +520,7 @@ static Status Io_save_record()
         case REC_ADMISSION:
             {
                 DataAdmission* data = (DataAdmission*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld\n",data->ward_id,data->bed_id,data->deposit);
+                fprintf(fp,"%lld|%d|%lld\n",data->ward_id,data->bed_label,data->deposit);
                 break;
             };
         case REC_DISCHARGE:
@@ -500,7 +532,7 @@ static Status Io_save_record()
         case REC_CHANGE_BED:
             {
                 DataChangeBed* data = (DataChangeBed*)Rec_detail(rec);
-                fprintf(fp,"%lld|%lld|%lld|%lld\n",data->from_ward_id,data->to_ward_id,data->from_bed_id,data->to_bed_id);
+                fprintf(fp,"%lld|%lld|%d|%d\n",data->from_ward_id,data->to_ward_id,data->from_bed_label,data->to_bed_label);
                 break;
             };
         case REC_CHANGE_DOC:
@@ -511,13 +543,13 @@ static Status Io_save_record()
             };
         case REC_STOCK_IN:
             {
-                DataStackIn* data = (DataStackIn*)Rec_detail(rec);
+                DataStockIn* data = (DataStockIn*)Rec_detail(rec);
                 fprintf(fp,"%lld|%lld|%lld|%lld|%d|%s\n",data->med_id,data->batch_id,data->buy_price,data->expire_ts,data->total,data->batch_no);
                 break;
             };
         case REC_STOCK_OUT:
             {
-                DataStackOut* data = (DataStackOut*)Rec_detail(rec);
+                DataStockOut* data = (DataStockOut*)Rec_detail(rec);
                 fprintf(fp,"%lld|%lld|%d|%s\n",data->med_id,data->batch_id,data->total,data->batch_no);
                 break;
             };
@@ -561,7 +593,34 @@ static Status Io_load_record()
             case REC_REGISTRATION:
             {
                 DataRegistration data;
-                fscanf(fp,"%lld|%d|%d|%d\n", &data.doc_id, &data.sequence_no,&data.target_date,&data.time_frame);
+                fscanf(fp,"%lld|%d|%d|%d|%d\n", &data.doc_id, &data.sequence_no,&data.target_date,&data.time_frame,&data.status);
+                // 加载时自动将过期未就诊的挂号标记为 COMPLETED
+                if (data.status == APPOINTMENT || data.status == WAITING)
+                {
+                    int today = Time_to_int_date(Time_now());
+                    if (data.target_date < today) {
+                        // 日期已过
+                        data.status = COMPLETED;
+                    } else if (data.target_date == today && data.time_frame > 0) {
+                        // 同一天，检查时段是否已过
+                        time_t now_ts = Time_now();
+                        struct tm* now_tm = localtime(&now_ts);
+                        int cur_total_min = now_tm->tm_hour * 60 + now_tm->tm_min;
+                        // 计算该时段的结束时间
+                        int end_hour, end_min;
+                        if (data.time_frame <= 8) {
+                            end_hour = 8 + data.time_frame / 2;
+                            end_min = data.time_frame % 2 * 30;
+                        } else {
+                            end_hour = 13 + (data.time_frame - 8) / 2;
+                            end_min = (data.time_frame - 8) % 2 * 30;
+                        }
+                        int end_total_min = end_hour * 60 + end_min;
+                        if (cur_total_min >= end_total_min) {
+                            data.status = COMPLETED;
+                        }
+                    }
+                }
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -569,7 +628,8 @@ static Status Io_load_record()
             case REC_CONSULTATION:
             {
                 DataConsultation data;
-                fscanf(fp,"%lld|%127[^|]|%127[^|]\n", &data.doc_id, data.diagnosis,data.advice);
+                fscanf(fp,"%lld|%127[^|\n]|%127[^|\n]", &data.doc_id, data.diagnosis,data.advice);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -577,7 +637,8 @@ static Status Io_load_record()
             case REC_EXAMINATION:
             {
                 DataExamination data;
-                fscanf(fp,"%lld|%63[^|]\n", &data.doc_id, data.exam_name);
+                fscanf(fp,"%lld|%63[^|\n]", &data.doc_id, data.exam_name);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -585,7 +646,8 @@ static Status Io_load_record()
             case REC_PRESCRIPTION:
             {
                 DataPrescription data;
-                fscanf(fp,"%lld|%lld|%d\n", &data.doc_id, &data.med_id,&data.amount);
+                fscanf(fp,"%lld|%lld|%d", &data.doc_id, &data.med_id,&data.amount);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -593,7 +655,8 @@ static Status Io_load_record()
             case REC_ADMISSION:
             {
                 DataAdmission data;
-                fscanf(fp,"%lld|%lld|%lld\n", &data.ward_id, &data.bed_id,&data.deposit);
+                fscanf(fp,"%lld|%d|%lld", &data.ward_id, &data.bed_label, &data.deposit);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -601,7 +664,8 @@ static Status Io_load_record()
             case REC_DISCHARGE:
             {
                 DataDischarge data;
-                fscanf(fp,"%lld|%lld\n", &data.total_bill, &data.paid);
+                fscanf(fp,"%lld|%lld", &data.total_bill, &data.paid);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -609,7 +673,8 @@ static Status Io_load_record()
             case REC_CHANGE_BED:
             {
                 DataChangeBed data;
-                fscanf(fp,"%lld|%lld|%lld|%lld\n",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_id,&data.to_bed_id);
+                fscanf(fp,"%lld|%lld|%d|%d",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_label, &data.to_bed_label);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -617,24 +682,27 @@ static Status Io_load_record()
             case REC_CHANGE_DOC:
             {
                 DataChangeDoc data;
-                fscanf(fp,"%lld|%lld\n", &data.old_doc_id, &data.new_doc_id);
+                fscanf(fp,"%lld|%lld", &data.old_doc_id, &data.new_doc_id);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
             }
             case REC_STOCK_IN:
             {
-                DataStackIn data;
-                fscanf(fp,"%lld|%lld|%lld|%lld|%d|%31[^|]\n",
+                DataStockIn data;
+                fscanf(fp,"%lld|%lld|%lld|%lld|%d|%31[^|\n]",
                     &data.med_id, &data.batch_id,&data.buy_price,&data.expire_ts,&data.total,data.batch_no);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
             }
             case REC_STOCK_OUT:
             {
-                DataStackOut data;
-                fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &data.med_id, &data.batch_id,&data.total,data.batch_no);
+                DataStockOut data;
+                fscanf(fp,"%lld|%lld|%d|%31[^|\n]", &data.med_id, &data.batch_id,&data.total,data.batch_no);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -664,7 +732,7 @@ static Status Io_save_doctor_relation()
         return HIS_ERR_IO_FAILURE;
     }
     fprintf(fp,"Pat_id|Doc_id\n");
-    List_T List_rel_doc = __tmp_list();  //TODO:
+    List_T List_rel_doc = Rel_doc_get();
     Rel_doc* rel_doc_ptr = List_first(List_rel_doc);
     while (rel_doc_ptr != NULL)
     {
@@ -712,7 +780,7 @@ static Status Io_save_ward_relation()
         return HIS_ERR_IO_FAILURE;
     }
     fprintf(fp,"Pat_id|Ward_id\n");
-    List_T List_rel_ward = __tmp_list();//TODO:
+    List_T List_rel_ward = Rel_ward_get();
     Rel_ward* rel_ward_ptr= List_first(List_rel_ward);
     while (rel_ward_ptr != NULL)
     {
@@ -750,69 +818,83 @@ static Status Io_load_ward_relation()
 
 
 
+static void Io_ensure_data_dir()
+{
+#ifdef _WIN32
+    mkdir("data");
+#else
+    mkdir("data", 0755);
+#endif
+}
+
 Status Io_save()
 {
+    Io_ensure_data_dir();
     Status s;
+    bool any_fail = false;
+
     if((s = Io_save_patient()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_doctor()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_fund()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_medicine()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_account()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_ward()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_record()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_doctor_relation()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
     if((s = Io_save_ward_relation()) != HIS_OK){
-        return s;
+        any_fail = true;
     }
-    return HIS_OK;
+    return any_fail ? HIS_ERR_IO_FAILURE : HIS_OK;
 }
 
 
 Status Io_load()
 {
     Status s;
-    if((s = Io_load_patient()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_doctor()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_fund()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_medicine()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_account()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_ward()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_record()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_doctor_relation()) != HIS_OK){
-        return s;
-    }
-    if((s = Io_load_ward_relation()) != HIS_OK){
-        return s;
-    }
-    return HIS_OK;
+    bool any_load = false;
+
+    s = Io_load_patient();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_doctor();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_fund();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_medicine();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_account();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_ward();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_record();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_doctor_relation();
+    if(s == HIS_OK) any_load = true;
+
+    s = Io_load_ward_relation();
+    if(s == HIS_OK) any_load = true;
+
+    return any_load ? HIS_OK : HIS_ERR_IO_FAILURE;
 }

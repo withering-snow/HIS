@@ -24,7 +24,14 @@ typedef struct {
 typedef struct{
     long long pat_id;
     long long priority_score;
+    int sequence_no;
+    int time_frame;
 }Rel_queue_node;
+typedef struct {
+    long long pat_id;
+    int       sequence_no;
+    int       time_frame;
+}RelQueueDataPackage;
 
 
 /*
@@ -45,6 +52,10 @@ void Rel_init();
  * @brief 销毁关系链表
  */
 void Rel_destroy();
+
+// 为 io 提供的链表访问接口
+List_T Rel_doc_get();
+List_T Rel_ward_get();
 
 
 // =============================================================================
@@ -121,35 +132,56 @@ bool Rel_has_doctor(long long patient_id);
 
 // =============================================================================
 // 实时叫号队列
-/*
- * 职责：管理医生今日的活跃接诊队列。
- * 逻辑：基于“准时”假设，队列内部按 time_slot 物理排序。
- */
 
 /**
- * @brief  将挂号/签到病人推入医生的今日队列
- * @param  sequence_no  时段序号 (用于内部排序)
+ * @brief  将病人推入医生的今日预约队列
  */
-Status Rel_queue_push(long long doc_id, long long pat_id, int sequence_no, int time_frame);
+Status Rel_appoint_queue_push(long long doc_id, long long pat_id, int sequence_no, int time_frame);
 
 /**
- * @brief  退号/取消挂号：从队列中移除特定病人
+ * @brief  将病人推入医生的今日候诊队列
+ */
+Status Rel_waiting_queue_push(long long doc_id, long long pat_id, int sequence_no, int time_frame);
+
+/**
+ * @brief  退号：从预约队列或待诊队列中移除特定病人
  */
 Status Rel_queue_remove(long long doc_id, long long pat_id);
 
 /**
- * @brief  医生叫号：弹出当前最该就诊的病人
+ * @brief  医生叫号：绑定下一位应当就诊的病人
  */
-long long Rel_queue_pop(long long doc_id);
+Status Rel_queue_call_reg(long long doc_id);
 
 /**
- * @brief  获取某医生当前的排队副本
- * @return 包含 patient_id 的新链表。调用者负责 List_free
+ * @brief  获取当前看诊的病人id
  */
-List_T Rel_queue_get_all(long long doc_id);
+long long Rel_queue_cur_pat(long long doc_id);
 
 /**
- * @brief  系统启动/每日零点同步：解析 Record 链表，重建所有医生的 Rel_Queue
+ * @brief  看诊结束：将临时看诊关系解绑
+ */
+Status Rel_queue_end_reg(long long doc_id);
+
+/**
+ * @brief  病人签到：将预约病人推入候诊队列
+ */
+Status Rel_queue_check_in(long long doc_id, long long pat_id);
+
+/**
+ * @brief  获取某医生当前的预约队列
+ * @return 包含 RelQueueDataPackage 的新链表。调用者负责 List_free
+ */
+List_T Rel_queue_get_appoint(long long doc_id);
+
+/**
+ * @brief  获取某医生当前的待诊队列
+ * @return 包含 RelQueueDataPackage 的新链表。调用者负责 List_free
+ */
+List_T Rel_queue_get_waiting(long long doc_id);
+
+/**
+ * @brief  系统启动/每日零点同步：解析 Record 链表，重建所有医生的挂号队列
  */
 void Rel_queue_update();
 

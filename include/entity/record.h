@@ -27,6 +27,7 @@ typedef enum {
 typedef enum{
     APPOINTMENT,      // 预约
     WAITING,          // 候诊
+    IN_PROGRESS,      // 就诊
     COMPLETED         // 诊毕
 }RegistrationStatus;  // 挂号状态
 typedef struct {
@@ -57,8 +58,8 @@ typedef struct {
 // 入院详情
 typedef struct {
     long long   ward_id;
-    long long   bed_id;
     long long   deposit;        // 交纳的押金
+    int         bed_label;
 } DataAdmission;
 // 出院详情
 typedef struct{
@@ -69,8 +70,8 @@ typedef struct{
 typedef struct {
     long long   from_ward_id;
     long long   to_ward_id;
-    long long   from_bed_id;
-    long long   to_bed_id;
+    int         from_bed_label;
+    int         to_bed_label;
 } DataChangeBed;
 // 医生变动
 typedef struct {
@@ -85,14 +86,14 @@ typedef struct{
     long long   expire_ts;      // 过期时间
     int         total;          // 总购入量
     char        batch_no[32];   // 批号
-}DataStackIn;
+}DataStockIn;
 // 报废详情
 typedef struct{
     long long   med_id;
     long long   batch_id;
     int         total;          // 总报废量
     char        batch_no[32];   // 批号
-}DataStackOut;
+}DataStockOut;
 
 
 
@@ -120,7 +121,7 @@ T Rec_pres_new(
 ;
 T Rec_admit_new(
     long long cost, long long pat_id,
-    long long ward_id, long long bed_id, long long deposit)
+    long long ward_id, int bed_label, long long deposit)
 ;
 T Rec_disc_new(
     long long cost, long long pat_id,
@@ -129,7 +130,7 @@ T Rec_disc_new(
 T Rec_c_bed_new(
     long long cost, long long pat_id,
     long long from_ward_id, long long to_ward_id,
-    long long from_bed_id, long long to_bed_id)
+    int from_bed_label, int to_bed_label)
 ;
 T Rec_c_doc_new(
     long long cost, long long pat_id,
@@ -162,10 +163,6 @@ void Rec_set_invalid(T r);
 
 Status Rec_set_reg_status(Record_T r, RegistrationStatus new_status);
 
-//TODO：以下作废
-
-// 将记录转换为字符串描述（比如显示 "患者A 挂号 医生B 费用10元"）
-void Rec_to_string(T r, char *buf, size_t len);
 
 
 #undef T

@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <limits.h>
 #include <time.h>
+#include <stdarg.h>
 // ---------------- 可能使用的库 ---------------- //
 
 
@@ -19,6 +20,9 @@
 
 // ---------------- 状态码 ---------------- //
 typedef enum {
+    // ui 层返回
+    HIS_QUIT = 1,
+
     // 基础状态
     HIS_OK = 0,                     // 正常运行
     HIS_ERR_NO_MEM = -1,            // 内存耗尽
@@ -44,6 +48,7 @@ typedef enum {
     HIS_ERR_INSUFFICIENT_FUNDS = -50,   // 余额不足
     HIS_ERR_PAYMENT_REQUIRED = -51,     // 未付款
     HIS_ERR_INVALID_PAYMENT = -52,
+    HIS_ERR_NO_FUNDS = -53,             // 没有账户
 
     // 系统级/IO 错误
     HIS_ERR_IO_FAILURE = -60,               // io时发生错误
@@ -55,10 +60,14 @@ typedef enum {
 
     //Account（账号）错误
     HIS_ERR_PASSWORD_MISMATCH = -72,
+    HIS_ERR_QUEUE_FULL = -73,               // 挂号队列已满
+    HIS_ERR_EXPIRED = -74,                  // 预约时段已过期
+
 
     //Record（记录）错误
     HIS_ERR_STATUS_ERROR = -80,
     HIS_ERR_INVALID_STATUS = -81,
+
 } Status;
 // ---------------- 状态码 ---------------- //
 
@@ -85,9 +94,10 @@ typedef enum {
 
 // 科室与文字的转换
 static const char* department_names[12] = {
+    "未知科室",
     "内科", "外科", "儿科", "妇产科", "眼科",
     "口腔科", "皮肤科", "急诊科", "放射科", "检验科",
-    "药剂科", "未知科室"
+    "药剂科"
 };
 
 /**
@@ -97,7 +107,7 @@ static const char* department_names[12] = {
  */
 static inline const char* department_name(Department department) {
     if (department < 0 || department >= DEP_COUNT)
-        return department_names[DEP_COUNT];
+        return department_names[0];
     return department_names[department];
 }
 // ---------------- 科室相关 ---------------- //
@@ -106,9 +116,11 @@ static inline const char* department_name(Department department) {
 
 
 // ---------------- 错误处理 ---------------- //
-// 硬断言：抓Bug
+
+// 条件编译：Debug 模式下 ASSERT 生效，Release 模式下跳过
+#ifndef NDEBUG
 /**
- * @brief 硬断言，用于针对预期外的错误
+ * @brief 硬断言，仅 Debug 模式生效，用于抓Bug
  * @param condition 应当出现的情况
  * @param message 未按预期时的报错消息
  */
@@ -122,16 +134,29 @@ static inline const char* department_name(Department department) {
             abort();                                                                                                   \
         }                                                                                                              \
     } while(0)
+#else
+/**
+ * @brief Release 模式下 ASSERT 为空操作
+ */
+#define ASSERT(condition, message) ((void)0)
+#endif
 
 // 安全内存分配
 /**
- * @brief 对空间检查的malloc
+ * @brief 对空间检查的malloc，失败时打印大红报错日志并返回 NULL
  * @param size 字节大小
- * @return 返回内存空间
+ * @return 返回内存空间，失败返回 NULL
  */
 static inline void *safe_malloc(size_t size) {
     void *p = malloc(size);
-    ASSERT(p != NULL, "内存耗尽，程序强制停止");
+    if (p == NULL) {
+        fprintf(stderr, "\n\033[1;41m!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\033[0m\n");
+        fprintf(stderr, "\033[1;41m!!            FATAL: OUT OF MEMORY            !!\033[0m\n");
+        fprintf(stderr, "\033[1;41m!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\033[0m\n");
+        fprintf(stderr, "\033[1;31mLocation: %s (%s:%d)\033[0m\n", __func__, __FILE__, __LINE__);
+        fprintf(stderr, "\033[1;31mRequested size: %zu bytes\033[0m\n", size);
+        fprintf(stderr, "\033[1;31m程序可能因内存不足而崩溃，请检查系统资源。\033[0m\n");
+    }
     return p;
 }
 // ---------------- 错误处理 ---------------- //
@@ -166,7 +191,7 @@ typedef int (*compare)(const void *a, const void *b);
  * 若已经达到上限，会返回-1
  */
 #define NEW_ID() \
-    ((_id_counter < LLONG_MAX)? (_id_counter++): INVALID_ID)
+    ((_id_counter < LLONG_MAX)? (++_id_counter): INVALID_ID)
 
 /**
  * @brief 加载实体时，需要使用此函数用于记录当前最大id
@@ -174,8 +199,9 @@ typedef int (*compare)(const void *a, const void *b);
  */
 #define LOAD_ID(id) \
     do{ \
-        if(id > _id_counter) _id_counter = id; \
+        if(id >= _id_counter) _id_counter = id; \
     }while(0)
+
 
 
 /**
@@ -189,6 +215,106 @@ static inline void cipher_xor_cyclic(char* data, size_t data_len) {
     for (size_t i = 0; i < data_len; i++) {
         data[i] ^= key[i % key_len];
     }
+}
+
+
+// 终端清空指令
+#ifdef __unix__
+#define CLEAN() system("clear")
+#elif defined(_WIN32) || defined(_WIN64)
+#define CLEAN() system("cls")
+#endif
+
+
+// 暂停指令，单位统一为 ms
+#ifdef _WIN32
+#include <windows.h>
+#define SLEEP_MS(ms) Sleep(ms)
+#else
+#include <unistd.h>
+#define SLEEP_MS(ms) usleep((ms) * 1000)
+#endif
+
+
+// ui需要用到的交互函数包
+#define load_ui_tools                                               \
+static void clear_space() {                                         \
+    int c;                                                          \
+    while ((c = getchar()) != '\n' && c != EOF) ;                   \
+}                                                                   \
+static void get_input_str(const char* prompt, char* dest, int max_len) { \
+    while (1) {                                                     \
+        printf("%s (限%d字符): ", prompt, max_len - 1);              \
+        if (fgets(dest, max_len, stdin) == NULL) continue;          \
+                                                                      \
+        size_t len = strlen(dest);                                  \
+        if (len > 0 && dest[len - 1] != '\n') {                     \
+            printf("错误：输入过长！请重新输入（最多%d字符）。\n", max_len - 1); \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0'; \
+                                                                      \
+        if (dest[0] == '\0') {                                      \
+            printf("错误：输入不能为空！\n");                          \
+            continue;                                               \
+        }                                                           \
+                                                                      \
+        if (strchr(dest, '|')) {                                    \
+            printf("错误：输入包含非法字符 '|'，请重新输入。\n");      \
+            continue;                                               \
+        }                                                           \
+                                                                      \
+        break;                                                      \
+    }                                                               \
+}                                                                   \
+static void get_input_str_allow_empty(const char* prompt, char* dest, int max_len) { \
+    while (1) {                                                     \
+        printf("%s (限%d字符): ", prompt, max_len - 1);              \
+        if (fgets(dest, max_len, stdin) == NULL) continue;          \
+                                                                      \
+        size_t len = strlen(dest);                                  \
+        if (len > 0 && dest[len - 1] != '\n') {                     \
+            printf("错误：输入过长！请重新输入（最多%d字符）。\n", max_len - 1); \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        if (len > 0 && dest[len - 1] == '\n') dest[len - 1] = '\0'; \
+                                                                      \
+        if (strchr(dest, '|')) {                                    \
+            printf("错误：输入包含非法字符 '|'，请重新输入。\n");      \
+            continue;                                               \
+        }                                                           \
+                                                                      \
+        break;                                                      \
+    }                                                               \
+}                                                                   \
+static long long get_input_long_long(const char* prompt,            \
+    long long min, long long max) {                                 \
+    long long val;                                                  \
+    while (1) {                                                     \
+        printf("%s (%lld-%lld): ", prompt, min, max);               \
+        if (scanf("%lld", &val) != 1) {                             \
+            printf("请输入合法整数\n");                               \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        int c = getchar();                                          \
+        if (c != '\n' && c != EOF) {                                \
+            printf("请输入合法整数，不能包含小数点或其它字符\n");       \
+            clear_space();                                          \
+            continue;                                               \
+        }                                                           \
+        if (val < min || val > max) {                               \
+            printf("请输入位于区间[%lld, %lld]的合法数字\n", min, max);  \
+            continue;                                               \
+        }                                                           \
+        return val;                                                 \
+    }                                                               \
+}                                                                   \
+static void press_enter() {                                         \
+    printf("\n按回车继续...");                                       \
+    clear_space();                                                  \
 }
 // ---------------- 工具 ---------------- //
 

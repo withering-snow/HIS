@@ -9,7 +9,7 @@ struct Fund_T {
 
 Fund_T Fund_load(long long pat_id, long long balance)
 {
-    Fund_T f=safe_malloc(sizeof(Fund_T));
+    Fund_T f=safe_malloc(sizeof(struct Fund_T));
     f->pat_id=pat_id;
     f->balance=balance;
     return f;
@@ -19,6 +19,7 @@ Fund_T Fund_new(long long pat_id)
 {
     Fund_T f=safe_malloc(sizeof(struct Fund_T));
     f->pat_id=pat_id;
+    f->balance = 0;
     return f;
 }
 

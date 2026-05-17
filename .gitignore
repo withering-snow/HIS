@@ -1,4 +1,18 @@
 cmake-build-debug/
 build/
 
+# CMake 构建产物（根目录就地构建）
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.exe
+
 .idea/
+.obsidian/
+.venv/
+
+# 临时文档
+~$*.docx
+
+

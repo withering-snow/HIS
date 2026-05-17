@@ -29,7 +29,13 @@ const char* Time_to_string_date(long long time_stamp);
  * @brief 将 Unix 时间戳转换为 YYYYMMDD 格式的整数
  * @example 1712880000 -> 20240412
  */
-int Time_to_int_date(long long ts)
+int Time_to_int_date(long long ts);
+
+/**
+ * @brief 将 YYYYMMDD 格式的整数转换回 Unix 时间戳（该日 00:00:00）
+ * @example 20240412 -> 1712851200 (2024-04-12 00:00:00 UTC/Local)
+ */
+long long Int_date_to_time(int date);
 
 /**
  * @brief 根据出生时间戳计算当前年龄

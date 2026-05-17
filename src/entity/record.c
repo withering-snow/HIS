@@ -18,8 +18,8 @@ struct Record_T {
         DataDischarge       disc;
         DataChangeBed       c_bed;
         DataChangeDoc       c_doc;//前面的actor_id为pat_id
-        DataStackIn         s_in;//后两个actor_id为doc_id
-        DataStackOut        s_out;
+        DataStockIn         s_in;//后两个actor_id为doc_id
+        DataStockOut        s_out;
     }               detail;
 
     // 4 bytes
@@ -74,16 +74,16 @@ Record_T Rec_cons_new(long long cost, long long pat_id, long long doc_id,
     DataConsultation data = {.doc_id = doc_id};
     strncpy(data.diagnosis, diagnosis, 127);
     strncpy(data.advice, advice, 127);
-    data.diagnosis[127] = 0;
-    data.advice[127] = 0;
+    data.diagnosis[127] = '\0';
+    data.advice[127] = '\0';
     return Rec_load(REC_CONSULTATION, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
 }
 
 Record_T Rec_exam_new(long long cost, long long pat_id, long long doc_id, const char* exam_name) {
     DataExamination data = {.doc_id = doc_id};
-    strncpy(data.exam_name, exam_name, 127);
-    data.exam_name[127] = 0;
+    strncpy(data.exam_name, exam_name, 63);
+    data.exam_name[63] = '\0';
     return Rec_load(REC_EXAMINATION, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
 }
@@ -95,8 +95,8 @@ Record_T Rec_pres_new(long long cost, long long pat_id, long long doc_id, long l
 }
 
 Record_T Rec_admit_new(long long cost, long long pat_id, long long ward_id,
-    long long bed_id, long long deposit) {
-    DataAdmission data = {.ward_id = ward_id, .bed_id = bed_id, .deposit = deposit};
+    int bed_label, long long deposit) {
+    DataAdmission data = {.ward_id = ward_id, .bed_label = bed_label, .deposit = deposit};
     return Rec_load(REC_ADMISSION, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
 }
@@ -109,12 +109,12 @@ Record_T Rec_disc_new(long long cost, long long pat_id, long long total_bill, lo
 
 Record_T Rec_c_bed_new(long long cost, long long pat_id,
                        long long from_ward_id, long long to_ward_id,
-                       long long from_bed_id, long long to_bed_id) {
+                       int from_bed_label, int to_bed_label) {
     DataChangeBed data = {
         .from_ward_id = from_ward_id,
         .to_ward_id = to_ward_id,
-        .from_bed_id = from_bed_id,
-        .to_bed_id = to_bed_id
+        .from_bed_label = from_bed_label,
+        .to_bed_label = to_bed_label
     };
     return Rec_load(REC_CHANGE_BED, false,
         pat_id, Time_now(), cost, &data, sizeof(data));
@@ -124,6 +124,35 @@ Record_T Rec_c_doc_new(long long cost, long long pat_id, long long old_doc_id, l
     DataChangeDoc data = {.old_doc_id = old_doc_id, .new_doc_id = new_doc_id};
     return Rec_load(REC_CHANGE_DOC, false, pat_id, Time_now(), cost, &data, sizeof(data));
 }
+
+Record_T Rec_s_in_new(long long cost, long long admin_id, long long med_id, long long batch_id, long long buy_price,
+    long long expire_ts, int total, const char *batch_no){
+    DataStockIn data = {
+        .batch_id = batch_id,
+        .buy_price = buy_price,
+        .expire_ts = expire_ts,
+        .med_id = med_id,
+        .total = total
+    };
+    strncpy(data.batch_no, batch_no, 31);
+    data.batch_no[31] = '\0';
+    return Rec_load(REC_STOCK_IN, false,
+        admin_id, Time_now(), cost, &data, sizeof(data));
+}
+
+Record_T Rec_s_out_new(long long cost, long long admin_id, long long med_id, long long batch_id, int total,
+    const char *batch_no){
+    DataStockOut data = {
+        .batch_id = batch_id,
+        .med_id = med_id,
+        .total = total
+    };
+    strncpy(data.batch_no, batch_no, 31);
+    data.batch_no[31] = '\0';
+    return Rec_load(REC_STOCK_OUT, false,
+        admin_id, Time_now(), cost, &data, sizeof(data));
+}
+
 void Rec_free(Record_T* r){
     ASSERT((r !=NULL),"不合法");
     free(*r);
@@ -187,13 +216,3 @@ Status Rec_set_reg_status(Record_T r, RegistrationStatus new_status)
     return HIS_OK;
 }
 
-//TODO：以下作废
-
-// 将记录转换为字符串描述（比如显示 "患者A 挂号 医生B 费用10元"）
-void Rec_to_string(Record_T r, char *buf, size_t len){
-    ASSERT(r && buf, "指针或缓冲区为空");
-    // TODO: 外部提供 buffer 空间，内部填充
-    // 先格式化公共头部：时间、ID、类型
-    // 然后根据 switch(r->type) 格式化不同的 detail 部分
-    // 建议使用 snprintf 以防止 buffer 溢出
-}

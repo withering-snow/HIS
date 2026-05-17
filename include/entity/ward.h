@@ -37,19 +37,19 @@ typedef struct {
  * @return              返回加载完成的 Ward_T
  */
 T Ward_load(
-    long long id, Department dept, long long daily_cost)
+    long long id, Department dept, long long daily_cost, const char* ward_name);
 ;
 /**
  * @brief                   新建病房结构体，并创建好病房从表，按顺序排号
  * @param dept              部门枚举
  * @param daily_cost        每日花费
- * @param start_bed_lable   起始的床号
+ * @param start_bed_label   起始的床号
  * @param bed_count         病床数
  * @return                  返回新建的 Ward_T
  */
 T Ward_new(
     Department dept, long long daily_cost,
-    int start_bed_lable, int bed_count)
+    int start_bed_label, int bed_count, const char* ward_name);
 ;
 /**
  * @brief       释放病房结构体并置空指针
@@ -66,11 +66,13 @@ long long   Ward_daily_cost(T w);
 int         Ward_bed_count(T w); // 返回该病房总床位数
 int         Ward_empty_count(T w); // 返回可用病床数
 List_T      Ward_beds(T w);
+const char* Ward_name(T w);
 
 // 公开的重装载的数据包
 typedef struct {
     Department  dept;
     long long   daily_cost;
+    char        ward_name[32];
 } Ward_Update_Pack;
 // 重装载： 在校验数据合法性后，将所有数据进行覆盖
 Status Ward_update(T w, const Ward_Update_Pack* pack);
@@ -80,6 +82,8 @@ int Ward_cmp_id(const void* a, const void* b);
 int Ward_cmp_dept(const void* a, const void* b);
 int Ward_cmp_cost(const void* a, const void* b);
 int Ward_cmp_empty(const void* a, const void* b); // 找哪间房空位多
+int Ward_cmp_name(const void *a, const void *b);
+int Ward_cmp_fuzzy(const void *a, const void *b);
 
 /* ---------------- 主表 ---------------- */
 

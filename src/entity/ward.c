@@ -18,12 +18,15 @@ struct Ward_T {
     Department  dept;
     int         bed_count;
     int         empty_count;
+
+    // char*
+    char        ward_name[32];
 };
 
 
 
 
-Ward_T Ward_load(long long id, Department dept, long long daily_cost){
+Ward_T Ward_load(long long id, Department dept, long long daily_cost, const char* ward_name){
     LOAD_ID(id);
     Ward_T w = (Ward_T)safe_malloc(sizeof(struct Ward_T));
     w->id = id;
@@ -32,10 +35,11 @@ Ward_T Ward_load(long long id, Department dept, long long daily_cost){
     w->bed_count = 0;
     w->empty_count = 0;
     w->beds = List_new(sizeof(Bed_T));
+    strncpy(w->ward_name, ward_name, sizeof(w->ward_name));
     return w;
 }
 
-Ward_T Ward_new(Department dept, long long daily_cost, int start_bed_lable, int bed_count){
+Ward_T Ward_new(Department dept, long long daily_cost, int start_bed_label, int bed_count, const char* ward_name){
     long long id = NEW_ID();
     Ward_T w = (Ward_T)safe_malloc(sizeof(struct Ward_T));
     w->id = id;
@@ -43,11 +47,12 @@ Ward_T Ward_new(Department dept, long long daily_cost, int start_bed_lable, int 
     w->daily_cost = daily_cost;
     w->bed_count = bed_count;
     w->empty_count = bed_count;
+    strncpy(w->ward_name, ward_name, sizeof(w->ward_name));
 
     List_T beds = List_new(sizeof(Bed_T));
     for(int i = 0; i < bed_count; i++){
         Bed_T tmp;
-        tmp.bed_label = start_bed_lable + i;
+        tmp.bed_label = start_bed_label + i;
         tmp.pat_id = INVALID_ID;
         tmp.status = BED_EMPTY;
         tmp.start_ts = INVALID_TIME;
@@ -98,6 +103,10 @@ List_T Ward_beds(Ward_T w){
     return w->beds;
 }
 
+const char * Ward_name(Ward_T w){
+    return w->ward_name;
+}
+
 
 
 
@@ -105,6 +114,7 @@ Status Ward_update(Ward_T w, const Ward_Update_Pack *pack){
     ASSERT(w!=NULL && pack != NULL, "空指针访问");
     w->dept = pack->dept;
     w->daily_cost = pack->daily_cost;
+    strncpy(w->ward_name, pack->ward_name, sizeof(w->ward_name));
     return HIS_OK;
 }
 
@@ -133,6 +143,21 @@ int Ward_cmp_empty(const void *a, const void *b) {
     Ward_T p = *(Ward_T *)a;
     Ward_T q = *(Ward_T *)b;
     return (p->empty_count > q->empty_count) - (p->empty_count < q->empty_count);
+}
+
+int Ward_cmp_name(const void *a, const void *b){
+    Ward_T p = *(Ward_T *)a;
+    Ward_T q = *(Ward_T *)b;
+    return strncmp(p->ward_name, q->ward_name, sizeof(p->ward_name));
+}
+
+
+int Ward_cmp_fuzzy(const void *a, const void *b){
+    Ward_T p = *(Ward_T *)a;
+    if(strstr(p->ward_name, (const char*)b) != NULL){
+        return HIS_OK;
+    }
+    return HIS_ERR_NOT_FOUND;
 }
 
 
