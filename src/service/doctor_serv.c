@@ -285,13 +285,14 @@ Status Serv_doc_discharge(long long pat_id){
     // 解除绑定
     Rel_unbind_ward(pat_id);
 
-    // 创建出院记录
-    Record_T r = Rec_disc_new(paid, pat_id, total_bill, paid);
+    // 创建出院记录（cost传负数表示退款）
+    Record_T r = Rec_disc_new(-refund, pat_id, total_bill, paid);
 
     List_push_back(Data_get_record(), &r);
 
     Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生办理病人[%lld]出院 账单[%lld]实付[%lld] 退还押金[%lld]", pat_id, total_bill, paid, refund);
     return HIS_OK;
+
 
 }
 

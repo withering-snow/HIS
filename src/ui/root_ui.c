@@ -36,7 +36,7 @@ static int __month_days(int y, int m) {
     if (m == 2 && __is_leap_year(y)) return 29;
     return days[m];
 }
-static long long __input_date(const char* prompt) {
+static long long __input_date(const char* prompt, int max_year) {
     printf("%s\n", prompt);
     char buf[16];
     int y, m, d;
@@ -55,11 +55,12 @@ static long long __input_date(const char* prompt) {
         }
         if (!ok) { printf("  只能包含数字！\n"); continue; }
         sscanf(buf, "%4d%2d%2d", &y, &m, &d);
-        if (y < 1900 || y > 2026) { printf("  年份不合法 (1900~2026)！\n"); continue; }
+        if (y < 1900 || y > max_year) { printf("  年份不合法 (1900~%d)！\n", max_year); continue; }
         if (m < 1 || m > 12) { printf("  月份不合法 (1~12)！\n"); continue; }
         if (d < 1 || d > __month_days(y, m)) { printf("  日期不合法！\n"); continue; }
         break;
     }
+
     struct tm tm = {0};
     tm.tm_year = y - 1900;
     tm.tm_mon  = m - 1;
@@ -157,11 +158,12 @@ static Status __patient() {
             Patient_Update_Pack pack;
             pack.gender = (gender)get_input_long_long(
                 "性别 (0:女, 1:男)", 0, 1);
-            pack.birth_ts = __input_date("出生日期");
+            pack.birth_ts = __input_date("出生日期", 2026);
             get_input_str("姓名", pack.name, 32);
             get_input_str("电话", pack.phone, 20);
             get_input_str("身份证号", pack.id_card, 20);
             Status s = Patient_update(target, &pack);
+
             if (s == HIS_OK) {
                 printf("修改成功！\n");
             } else {
@@ -215,8 +217,9 @@ static Status __doctor() {
             Doctor_Update_Pack pack;
             get_input_str("姓名", pack.name, 32);
             pack.gender = (gender)get_input_long_long("性别 (0:女, 1:男)", 0, 1);
-            pack.birth_ts = __input_date("出生日期");
+            pack.birth_ts = __input_date("出生日期", 2026);
             pack.dept = (Department)get_input_long_long(
+
                 "科室：\n1.内科\t2.外科\t3.儿科\t4.妇产科\n5.眼科\t6.口腔科\t7.皮肤科\t8.急诊科\n9.放射科\t10.检验科\t11.药剂科", 1, 11);
             pack.title = (DoctorTitle)get_input_long_long(
                 "职称：\n1.住院医师\t2.主治医师\t3.副主任医师\t4.主任医师", 1, 4);
@@ -338,13 +341,14 @@ static Status __doctor() {
             Doctor_Update_Pack pack;
             pack.gender = (gender)get_input_long_long(
                 "性别 (0:女, 1:男)", 0, 1);
-            pack.birth_ts = __input_date("出生日期");
+            pack.birth_ts = __input_date("出生日期", 2026);
             pack.dept = (Department)get_input_long_long(
                 "科室：\n1.内科\t2.外科\t3.儿科\t4.妇产科\n5.眼科\t6.口腔科\t7.皮肤科\t8.急诊科\n9.放射科\t10.检验科\t11.药剂科", 1, 11);
             pack.title = (DoctorTitle)get_input_long_long(
                 "职称：\n1.住院医师\t2.主治医师\t3.副主任医师\t4.主任医师", 1, 4);
             pack.reg_fee = get_input_long_long("挂号费（分）", 0, 100000);
             pack.is_active = (bool)get_input_long_long("出诊状态 (0:未出诊, 1:出诊中)", 0, 1);
+
             get_input_str("姓名", pack.name, 32);
             get_input_str("电话", pack.phone, 20);
             get_input_str("身份证号", pack.id_card, 20);
@@ -400,7 +404,8 @@ static Status __medicine() {
             long long mid = get_input_long_long("药品 ID", 1, 9999);
             long long bprice = get_input_long_long("进价（分）", 0, 100000);
             int count = (int)get_input_long_long("数量", 1, 1000);
-            long long expire_ts = __input_date("过期日期");
+            long long expire_ts = __input_date("过期日期", 2099);
+
             char bno[32];
             get_input_str("批次号", bno, 32);
             Status s = Serv_root_add_medicine_batch(mid, bprice, expire_ts, count, bno);
@@ -801,11 +806,14 @@ static void __print_records(List_T list) {
     while (ptr != NULL) {
         Record_T r = *(Record_T*)ptr;
         long long cost = Rec_cost(r);
-        total_income += cost;
+        if (cost > 0) total_income += cost;  // 只统计正数（退款不计入收入）
         ServRecordDataPackage* pkg = Serv_helper_record_to_pkg(r);
+        long long abs_cost = cost < 0 ? -cost : cost;
         printf("%-8lld | %-12s | %-10s | %-12s | %lld.%02lld 元 | %s\n",
             Rec_actor_id(r), pkg->actor_name,
-            pkg->type_name, Time_to_string_date(Rec_time_stamp(r)), cost/100, cost%100, pkg->content);
+            pkg->type_name, Time_to_string_date(Rec_time_stamp(r)), cost/100, abs_cost%100, pkg->content);
+
+
         free(pkg);
         ptr = List_next(list);
     }

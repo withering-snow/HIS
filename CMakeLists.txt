@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 4.0)
 
 project(HIS
         LANGUAGES C
-        VERSION 1.0.1)
+        VERSION 1.0.2)
 
 set(CMAKE_C_STANDARD 11)
 

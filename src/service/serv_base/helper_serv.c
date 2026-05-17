@@ -176,11 +176,12 @@ T* Serv_helper_record_to_pkg(Record_T r){
 
         case REC_DISCHARGE:{
             DataDischarge* data = (DataDischarge*)Rec_detail(r);
-            long long refund = data->paid >= data->total_bill ? data->paid - data->total_bill : 0;
+            long long refund = -Rec_cost(r);  // cost传的是-refund
             snprintf(buffer, 512, "总住院开销[%lld.%02lld]元 实付[%lld.%02lld]元 退还押金[%lld.%02lld]元",
                 data->total_bill/100, data->total_bill%100,
                 data->paid/100, data->paid%100,
                 refund/100, refund%100);
+
             break;
         }
 

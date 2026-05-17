@@ -65,7 +65,9 @@ typedef struct {
 typedef struct{
     long long   total_bill;     // 总支出
     long long   paid;           // 已支付的押金
+    long long   refund;         // 退还的押金
 } DataDischarge;
+
 // 床位变动
 typedef struct {
     long long   from_ward_id;
