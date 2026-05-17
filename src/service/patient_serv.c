@@ -220,7 +220,7 @@ List_T Serv_patient_queue_status() {
 
 long long Serv_patient_get_fund(){
     long long pat_id = Serv_account_cur_id();
-    Fund_T fund = Serv_helper_finder(pat_id, TYPE_FUND);
+    Fund_T fund = (Fund_T)Serv_helper_finder(pat_id, TYPE_FUND);
     if(fund == NULL){
         return -1;
     }

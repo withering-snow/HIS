@@ -433,25 +433,38 @@ void Rel_queue_update(){
         Record_T record = *((Record_T*)find_ptr);
 
         if( Rec_is_invalid(record) == false &&
-            Rec_type(record) == REC_REGISTRATION &&
-            ((DataRegistration*)Rec_detail(record))->target_date == today)
+            Rec_type(record) == REC_REGISTRATION)
         {
             DataRegistration* data = (DataRegistration*)Rec_detail(record);
-            switch(data->status){
-                case APPOINTMENT:
-                    Rel_appoint_queue_push(data->doc_id, Rec_actor_id(record),
-                        data->sequence_no, data->time_frame);
-                    break;
-                case WAITING:
-                    Rel_waiting_queue_push(data->doc_id, Rec_actor_id(record),
-                        data->sequence_no, data->time_frame);
-                    break;
-                case IN_PROGRESS:
-                    Rel_doc rel_tmp = {Rec_actor_id(record), data->doc_id};
-                    List_push_back(Rel_doc_seeing_list, &rel_tmp);
-                    break;
-                default:
-                    break;
+
+            // 如果目标日期已过，且状态还是 APPOINTMENT 或 WAITING，自动标记为 COMPLETED
+            if (data->target_date < today &&
+                (data->status == APPOINTMENT || data->status == WAITING))
+            {
+                Rec_set_reg_status(record, COMPLETED);
+                find_ptr = List_next(records);
+                continue;
+            }
+
+            // 只处理今天的记录
+            if (data->target_date == today)
+            {
+                switch(data->status){
+                    case APPOINTMENT:
+                        Rel_appoint_queue_push(data->doc_id, Rec_actor_id(record),
+                            data->sequence_no, data->time_frame);
+                        break;
+                    case WAITING:
+                        Rel_waiting_queue_push(data->doc_id, Rec_actor_id(record),
+                            data->sequence_no, data->time_frame);
+                        break;
+                    case IN_PROGRESS:
+                        Rel_doc rel_tmp = {Rec_actor_id(record), data->doc_id};
+                        List_push_back(Rel_doc_seeing_list, &rel_tmp);
+                        break;
+                    default:
+                        break;
+                }
             }
         }
         find_ptr = List_next(records);

@@ -245,13 +245,13 @@ static Status Io_load_medicine()
 
     Medicine_T recent_med = NULL;  char type = 'M';
 
-    while (fscanf(fp, "%c|", &type) == 1)
+    while (fscanf(fp, " %c|", &type) == 1)
     {
         if (type == 'M')
         {
             long long   id;           long long   cur_price;
             int         total_remain; char        name[32];
-            if (fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &id,&cur_price, &total_remain, name) != 4)
+            if (fscanf(fp,"%lld|%lld|%d|%31[^|\n]\n", &id,&cur_price, &total_remain, name) != 4)
             {
                 // 跳过损坏的行
                 fscanf(fp, "%*[^\n]\n");
@@ -270,7 +270,7 @@ static Status Io_load_medicine()
             }
             MedicineBatch bat;
             memset(&bat, 0, sizeof(bat));
-            if (fscanf(fp, "%lld|%lld|%lld|%d|%d|%31[^|]\n",
+            if (fscanf(fp, "%lld|%lld|%lld|%d|%d|%31[^|\n]\n",
                 &bat.id,
                 &bat.buy_price,
                 &bat.expire_ts,
@@ -426,7 +426,7 @@ static Status Io_load_ward()
 
     Ward_T recent_ward = NULL;char type = 'W';
 
-    while (fscanf(fp,"%c|",&type) == 1)
+    while (fscanf(fp," %c|",&type) == 1)
     {
         if (type=='W')
         {
@@ -495,7 +495,7 @@ static Status Io_save_record()
         case REC_REGISTRATION:
             {
                 DataRegistration* data = (DataRegistration*)Rec_detail(rec);
-                fprintf(fp,"%lld|%d|%d|%d\n",data->doc_id,data->sequence_no,data->target_date,data->time_frame);
+                fprintf(fp,"%lld|%d|%d|%d|%d\n",data->doc_id,data->sequence_no,data->target_date,data->time_frame,data->status);
                 break;
             }
 
@@ -593,7 +593,7 @@ static Status Io_load_record()
             case REC_REGISTRATION:
             {
                 DataRegistration data;
-                fscanf(fp,"%lld|%d|%d|%d\n", &data.doc_id, &data.sequence_no,&data.target_date,&data.time_frame);
+                fscanf(fp,"%lld|%d|%d|%d|%d\n", &data.doc_id, &data.sequence_no,&data.target_date,&data.time_frame,&data.status);
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -601,7 +601,8 @@ static Status Io_load_record()
             case REC_CONSULTATION:
             {
                 DataConsultation data;
-                fscanf(fp,"%lld|%127[^|]|%127[^|]\n", &data.doc_id, data.diagnosis,data.advice);
+                fscanf(fp,"%lld|%127[^|\n]|%127[^|\n]", &data.doc_id, data.diagnosis,data.advice);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -609,7 +610,8 @@ static Status Io_load_record()
             case REC_EXAMINATION:
             {
                 DataExamination data;
-                fscanf(fp,"%lld|%63[^|]\n", &data.doc_id, data.exam_name);
+                fscanf(fp,"%lld|%63[^|\n]", &data.doc_id, data.exam_name);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -617,7 +619,8 @@ static Status Io_load_record()
             case REC_PRESCRIPTION:
             {
                 DataPrescription data;
-                fscanf(fp,"%lld|%lld|%d\n", &data.doc_id, &data.med_id,&data.amount);
+                fscanf(fp,"%lld|%lld|%d", &data.doc_id, &data.med_id,&data.amount);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -625,7 +628,8 @@ static Status Io_load_record()
             case REC_ADMISSION:
             {
                 DataAdmission data;
-                fscanf(fp,"%lld|%d|%lld\n", &data.ward_id, &data.bed_label, &data.deposit);
+                fscanf(fp,"%lld|%d|%lld", &data.ward_id, &data.bed_label, &data.deposit);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -633,7 +637,8 @@ static Status Io_load_record()
             case REC_DISCHARGE:
             {
                 DataDischarge data;
-                fscanf(fp,"%lld|%lld\n", &data.total_bill, &data.paid);
+                fscanf(fp,"%lld|%lld", &data.total_bill, &data.paid);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -641,7 +646,8 @@ static Status Io_load_record()
             case REC_CHANGE_BED:
             {
                 DataChangeBed data;
-                fscanf(fp,"%lld|%lld|%d|%d\n",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_label, &data.to_bed_label);
+                fscanf(fp,"%lld|%lld|%d|%d",  &data.from_ward_id,&data.to_ward_id,&data.from_bed_label, &data.to_bed_label);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -649,7 +655,8 @@ static Status Io_load_record()
             case REC_CHANGE_DOC:
             {
                 DataChangeDoc data;
-                fscanf(fp,"%lld|%lld\n", &data.old_doc_id, &data.new_doc_id);
+                fscanf(fp,"%lld|%lld", &data.old_doc_id, &data.new_doc_id);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -657,8 +664,9 @@ static Status Io_load_record()
             case REC_STOCK_IN:
             {
                 DataStockIn data;
-                fscanf(fp,"%lld|%lld|%lld|%lld|%d|%31[^|]\n",
+                fscanf(fp,"%lld|%lld|%lld|%lld|%d|%31[^|\n]",
                     &data.med_id, &data.batch_id,&data.buy_price,&data.expire_ts,&data.total,data.batch_no);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;
@@ -666,7 +674,8 @@ static Status Io_load_record()
             case REC_STOCK_OUT:
             {
                 DataStockOut data;
-                fscanf(fp,"%lld|%lld|%d|%31[^|]\n", &data.med_id, &data.batch_id,&data.total,data.batch_no);
+                fscanf(fp,"%lld|%lld|%d|%31[^|\n]", &data.med_id, &data.batch_id,&data.total,data.batch_no);
+                getc(fp); // 消耗换行符
                 rec = Rec_load(type, is_invalid, actor_id, time_stamp, cost,
                     &data, sizeof(data));
                 break;

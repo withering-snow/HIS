@@ -144,7 +144,7 @@ T* Serv_helper_record_to_pkg(Record_T r){
 
         case REC_CONSULTATION:{
             DataConsultation* data = (DataConsultation*)Rec_detail(r);
-            snprintf(buffer, 512, "[%s]医生\n诊断： %s\n医嘱： %s",
+            snprintf(buffer, 512, "[%s]医生 诊断：%s 医嘱：%s",
                 Serv_helper_id_to_name(data->doc_id, TYPE_DOCTOR),
                 data->diagnosis, data->advice);
             break;

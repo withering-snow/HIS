@@ -10,6 +10,7 @@ typedef enum {
     PAT_RECORD     = 2,
     PAT_DOCTOR     = 3,
     PAT_REGISTER   = 4,
+    PAT_CHECKIN    = 5,
 } PAT_MAIN_MENU_CHOICE;
 
 typedef enum {
@@ -93,10 +94,11 @@ Status UI_pat_menu() {
         printf(" 2 - 诊疗记录查询\n");
         printf(" 3 - 医生信息查询\n");
         printf(" 4 - 预约挂号\n");
+        printf(" 5 - 签到与排队状态\n");
         printf(" 0 - 退出登录\n");
         printf("=======================\n");
 
-        PAT_MAIN_MENU_CHOICE main_choice = get_input_long_long("请选择功能", 0, 4);
+        PAT_MAIN_MENU_CHOICE main_choice = get_input_long_long("请选择功能", 0, 5);
 
         switch (main_choice) {
             case PAT_PATIENT: {
@@ -310,29 +312,85 @@ Status UI_pat_menu() {
 
                 // 4. 选择日期（只允许预约3天内）
                 int today = Time_to_int_date(Time_now());
-                printf("\n选择预约日期（只允许预约3天内）：\n");
-                int y = (int)get_input_long_long("  年", 2026, 2026);
-                int m = (int)get_input_long_long("  月 (1~12)", 1, 12);
-                int d = (int)get_input_long_long("  日 (1~31)", 1, 31);
-                struct tm tm = {0};
-                tm.tm_year = y - 1900; tm.tm_mon = m - 1; tm.tm_mday = d;
-                int target_date = Time_to_int_date((long long)mktime(&tm));
+                // 计算今天、明天、后天的具体日期字符串
+                char date_str[3][20];
+                for (int i = 0; i < 3; i++) {
+                    long long ts = Int_date_to_time(today + i);
+                    strncpy(date_str[i], Time_to_string_date(ts), 20);
+                }
+                printf("\n选择预约日期：\n");
+                printf(" 1 - %s (今天)\n", date_str[0]);
+                printf(" 2 - %s (明天)\n", date_str[1]);
+                printf(" 3 - %s (后天)\n", date_str[2]);
+                long long date_choice = get_input_long_long("请选择", 1, 3);
+                int target_date = today + (int)(date_choice - 1);
 
-                // 检查是否在3天内
-                if (target_date < today || target_date > today + 3) {
-                    printf("只能预约今天起3天内！\n");
-                    List_free(&available);
-                    break;
+                // 5. 选择时间段（如果是今天，过滤已过时段）
+                // 每个时段的结束小时：急诊0点结束，1~4时段结束于12点，5~8结束于12点，9~16结束于17点
+                // 简化判断：时段0(急诊)全天可约；时段1~8(上午)结束于12点；时段9~16(下午)结束于17点
+                int min_tf = 0, max_tf = 16;
+                if (target_date == today) {
+                    // 获取当前小时
+                    time_t now_ts = Time_now();
+                    struct tm* now_tm = localtime(&now_ts);
+                    int cur_hour = now_tm->tm_hour;
+                    int cur_min = now_tm->tm_min;
+
+                    // 根据当前时间计算最小可选时段
+                    // 时段0(急诊)始终可选
+                    // 时段1(8:00-8:30): 如果当前>=8:30则不可选
+                    // 时段2(8:30-9:00): 如果当前>=9:00则不可选 ... 以此类推
+                    // 上午时段1~8: 开始时间 = 8:00 + (i-1)*30分钟
+                    // 下午时段9~16: 开始时间 = 13:00 + (i-9)*30分钟
+                    int cur_total_min = cur_hour * 60 + cur_min;
+                    min_tf = 0; // 急诊始终可选
+                    for (int i = 1; i <= 16; i++) {
+                        int start_hour, start_min;
+                        if (i <= 8) {
+                            start_hour = 8 + (i - 1) / 2;
+                            start_min = (i - 1) % 2 * 30;
+                        } else {
+                            start_hour = 13 + (i - 9) / 2;
+                            start_min = (i - 9) % 2 * 30;
+                        }
+                        int start_total_min = start_hour * 60 + start_min;
+                        // 如果该时段开始时间在当前时间之后，则可用
+                        if (start_total_min > cur_total_min) {
+                            min_tf = i;
+                            break;
+                        }
+                    }
+                    if (min_tf == 0 && cur_total_min >= 0) {
+                        // 所有时段都过了，但急诊还是可以选
+                        min_tf = 0;
+                    }
                 }
 
-                // 5. 选择时间段
                 printf("\n选择时间段：\n");
-                printf(" 0 - 急诊\n");
-                printf(" 1 - 8:00-8:30   2 - 8:30-9:00   3 - 9:00-9:30   4 - 9:30-10:00\n");
-                printf(" 5 - 10:00-10:30 6 - 10:30-11:00 7 - 11:00-11:30 8 - 11:30-12:00\n");
-                printf(" 9 - 13:00-13:30 10 - 13:30-14:00 11 - 14:00-14:30 12 - 14:30-15:00\n");
-                printf(" 13 - 15:00-15:30 14 - 15:30-16:00 15 - 16:00-16:30 16 - 16:30-17:00\n");
-                int time_frame = (int)get_input_long_long("请选择", 0, 16);
+                printf(" 0 - 急诊");
+                if (target_date == today && min_tf > 0) printf(" (已过时段已隐藏)");
+                printf("\n");
+                for (int i = 1; i <= 16; i++) {
+                    if (target_date == today && i < min_tf) continue; // 跳过已过时段
+                    int start_hour, start_min, end_hour, end_min;
+                    if (i <= 8) {
+                        start_hour = 8 + (i - 1) / 2;
+                        start_min = (i - 1) % 2 * 30;
+                        end_hour = 8 + i / 2;
+                        end_min = i % 2 * 30;
+                    } else {
+                        start_hour = 13 + (i - 9) / 2;
+                        start_min = (i - 9) % 2 * 30;
+                        end_hour = 13 + (i - 8) / 2;
+                        end_min = (i - 8) % 2 * 30;
+                    }
+                    printf(" %2d - %02d:%02d-%02d:%02d", i, start_hour, start_min, end_hour, end_min);
+                    if (i % 4 == 0) printf("\n");
+                }
+                if (target_date != today || 16 >= min_tf) {
+                    if (16 % 4 != 0) printf("\n");
+                }
+                int time_frame = (int)get_input_long_long("请选择", min_tf, 16);
 
                 // 6. 检查号源并预约
                 Status s = Serv_patient_register(doc_id, target_date, time_frame);
@@ -345,6 +403,84 @@ Status UI_pat_menu() {
                 }
 
                 List_free(&available);
+                break;
+            }
+
+            case PAT_CHECKIN: {
+                CLEAN();
+                printf("--- 签到与排队状态 ---\n");
+                long long pat_id = Serv_account_cur_id();
+
+                // 先查看当前排队状态（只显示已签到的候诊中状态）
+                List_T queue_status = Serv_patient_queue_status();
+                if (queue_status != NULL && List_size(queue_status) > 0) {
+                    printf("当前候诊状态：\n");
+                    printf("%-8s | %-12s | %-8s | %-8s | %s\n", "医生ID", "医生姓名", "排队号", "位置", "前面人数");
+                    printf("------------------------------------------------------------\n");
+                    void* qp = List_first(queue_status);
+                    while (qp != NULL) {
+                        ServQueueStatusPackage* pkg = (ServQueueStatusPackage*)qp;
+                        const char* doc_name = Serv_helper_id_to_name(pkg->doc_id, TYPE_DOCTOR);
+                        printf("%-8lld | %-12s | %-8d | %-8d | %d\n",
+                            pkg->doc_id, doc_name ? doc_name : "未知",
+                            pkg->sequence_no, pkg->position, pkg->people_ahead);
+                        qp = List_next(queue_status);
+                    }
+                } else {
+                    printf("暂无候诊信息（请先预约挂号，然后签到）\n");
+                }
+                Serv_helper_free_list(queue_status);
+
+                // 提供签到选项
+                printf("\n1. 签到\n");
+                printf("0. 返回\n");
+                long long checkin_choice = get_input_long_long("请选择", 0, 1);
+                if (checkin_choice == 1) {
+                    // 先展示该病人的预约记录
+                    printf("\n--- 我的预约记录 ---\n");
+                    List_T records = Data_get_record();
+                    int today = Time_to_int_date(Time_now());
+                    void* rp = List_first(records);
+                    bool has_appoint = false;
+                    while (rp != NULL) {
+                        Record_T r = *(Record_T*)rp;
+                        if (!Rec_is_invalid(r) && Rec_type(r) == REC_REGISTRATION &&
+                            Rec_actor_id(r) == pat_id)
+                        {
+                            DataRegistration* data = (DataRegistration*)Rec_detail(r);
+                            if (data->target_date >= today &&
+                                (data->status == APPOINTMENT || data->status == WAITING))
+                            {
+                                const char* doc_name = Serv_helper_id_to_name(data->doc_id, TYPE_DOCTOR);
+                                const char* tf_str = "";
+                                if (data->time_frame == 0) tf_str = "急诊";
+                                else if (data->time_frame <= 8) tf_str = "上午";
+                                else tf_str = "下午";
+                                printf("  医生ID: %-8lld | 医生: %-12s | 日期: %d | %s | 状态: %s\n",
+                                    data->doc_id, doc_name ? doc_name : "未知",
+                                    data->target_date, tf_str,
+                                    data->status == APPOINTMENT ? "待签到" : "候诊中");
+                                has_appoint = true;
+                            }
+                        }
+                        rp = List_next(records);
+                    }
+                    if (!has_appoint) printf("  暂无待签到的预约记录\n");
+
+                    long long doc_id = get_input_long_long("请输入要签到的医生ID", 0, 999999);
+                    Status s = Serv_patient_checkin(doc_id);
+                    if (s == HIS_OK) {
+                        printf("签到成功！请等待医生叫号。\n");
+                    } else if (s == HIS_ERR_NOT_FOUND) {
+                        printf("未找到该医生的预约记录，请确认已预约且日期正确\n");
+                    } else if (s == HIS_ERR_ALREADY_EXISTS) {
+                        printf("已签到，请耐心等待叫号\n");
+                    } else if (s == HIS_ERR_NO_FUNDS || s == HIS_ERR_INSUFFICIENT_FUNDS) {
+                        printf("余额不足，无法支付挂号费，请先充值\n");
+                    } else {
+                        printf("签到失败！\n");
+                    }
+                }
                 break;
             }
 

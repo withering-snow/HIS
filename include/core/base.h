@@ -114,9 +114,11 @@ static inline const char* department_name(Department department) {
 
 
 // ---------------- 错误处理 ---------------- //
-// 硬断言：抓Bug
+
+// 条件编译：Debug 模式下 ASSERT 生效，Release 模式下跳过
+#ifndef NDEBUG
 /**
- * @brief 硬断言，用于针对预期外的错误
+ * @brief 硬断言，仅 Debug 模式生效，用于抓Bug
  * @param condition 应当出现的情况
  * @param message 未按预期时的报错消息
  */
@@ -130,16 +132,29 @@ static inline const char* department_name(Department department) {
             abort();                                                                                                   \
         }                                                                                                              \
     } while(0)
+#else
+/**
+ * @brief Release 模式下 ASSERT 为空操作
+ */
+#define ASSERT(condition, message) ((void)0)
+#endif
 
 // 安全内存分配
 /**
- * @brief 对空间检查的malloc
+ * @brief 对空间检查的malloc，失败时打印大红报错日志并返回 NULL
  * @param size 字节大小
- * @return 返回内存空间
+ * @return 返回内存空间，失败返回 NULL
  */
 static inline void *safe_malloc(size_t size) {
     void *p = malloc(size);
-    ASSERT(p != NULL, "内存耗尽，程序强制停止");
+    if (p == NULL) {
+        fprintf(stderr, "\n\033[1;41m!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\033[0m\n");
+        fprintf(stderr, "\033[1;41m!!            FATAL: OUT OF MEMORY            !!\033[0m\n");
+        fprintf(stderr, "\033[1;41m!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\033[0m\n");
+        fprintf(stderr, "\033[1;31mLocation: %s (%s:%d)\033[0m\n", __func__, __FILE__, __LINE__);
+        fprintf(stderr, "\033[1;31mRequested size: %zu bytes\033[0m\n", size);
+        fprintf(stderr, "\033[1;31m程序可能因内存不足而崩溃，请检查系统资源。\033[0m\n");
+    }
     return p;
 }
 // ---------------- 错误处理 ---------------- //

@@ -5,6 +5,7 @@ load_ui_tools
 bool UI_doc_should_continue = false;
 
 typedef enum {
+    DMC_QUIT       = 0,
     DMC_ACTIVATE   = 1,
     DMC_CALL_REG   = 2,
     DMC_CONSULT    = 3,
@@ -16,8 +17,8 @@ typedef enum {
     DMC_CHANGE_PW  = 9,
     DMC_CHANGE_BED = 10,
     DMC_CHANGE_DOC = 11,
-    DMC_DEACTIVATE = 0,
-    DMC_QUIT       = 99
+    DMC_END_REG    = 12,
+    DMC_DEACTIVATE = 13,
 } DOC_MENU_CHOICE;
 
 Status UI_doc_menu() {
@@ -44,11 +45,11 @@ Status UI_doc_menu() {
         }
         printf(" 1.开始出诊   2.叫号       3.看诊       4.检查\n");
         printf(" 5.开药       6.入院       7.出院       8.队列\n");
-        printf(" 9.修改密码  10.换床      11.换医生\n");
-        printf(" 0.结束出诊  99.退出登录\n");
+        printf(" 9.修改密码  10.换床      11.换医生    12.结束看诊\n");
+        printf("13.结束出诊   0.退出登录\n");
 
-        long long choice = get_input_long_long("请选择", 0, 99);
-        if (choice == 99) {
+        long long choice = get_input_long_long("请选择", 0, 13);
+        if (choice == 0) {
             CLEAN();
             printf("--- 退出 ---\n");
             printf("1. 退出登录（返回登录界面）\n");
@@ -65,6 +66,7 @@ Status UI_doc_menu() {
             }
         }
         else if (choice == 1) {
+
             Status s = Serv_doc_active();
             if (s == HIS_OK) printf("开始出诊！\n");
             else if (s == HIS_ERR_ALREADY_EXISTS) printf("已在出诊状态\n");
@@ -109,33 +111,42 @@ Status UI_doc_menu() {
             if (cur_pat == INVALID_ID) {
                 printf("当前无看诊病人，请先叫号\n");
             } else {
-                // 先展示药品列表供医生选择
-                printf("\n--- 药品列表 ---\n");
+                // 先模糊搜索药品，再选ID
+                char keyword[32] = "";
+                get_input_str("搜索药品名称（直接回车显示全部）", keyword, 32);
                 List_T med_list = Data_get_medicine();
+                printf("\n--- 药品列表 ---\n");
                 printf("%-8s | %-20s | %-10s | %-8s\n", "ID", "药品名称", "零售价", "库存");
                 printf("----------------------------------------------------------\n");
                 void* mp = List_first(med_list);
                 while (mp != NULL) {
                     Medicine_T m = *(Medicine_T*)mp;
-                    printf("%-8lld | %-20s | %lld.%02lld 元 | %-8d\n",
-                        Medicine_id(m), Medicine_name(m),
-                        Medicine_cur_price(m)/100, Medicine_cur_price(m)%100,
-                        Medicine_total_remain(m));
+                    if (strlen(keyword) == 0 || strstr(Medicine_name(m), keyword) != NULL) {
+                        printf("%-8lld | %-20s | %lld.%02lld 元 | %-8d\n",
+                            Medicine_id(m), Medicine_name(m),
+                            Medicine_cur_price(m)/100, Medicine_cur_price(m)%100,
+                            Medicine_total_remain(m));
+                    }
                     mp = List_next(med_list);
                 }
 
-                char med_name[32] = "";
-                get_input_str("药品名称（支持模糊搜索）", med_name, 32);
+                long long med_id = get_input_long_long("请输入药品ID", 0, 999999);
                 int amount = (int)get_input_long_long("数量", 1, 1000);
-                Status s = Serv_doc_prescribe(med_name, amount);
-                if (s == HIS_OK) {
-                    printf("开药成功！\n");
-                } else if (s == HIS_ERR_NOT_FOUND) {
+                // 通过ID查找药品名
+                Medicine_T target = (Medicine_T)Serv_helper_finder(med_id, TYPE_MEDICINE);
+                if (target == NULL) {
                     printf("未找到该药品\n");
-                } else if (s == HIS_ERR_OUT_OF_STOCK) {
-                    printf("库存不足！\n");
                 } else {
-                    printf("开药失败\n");
+                    Status s = Serv_doc_prescribe(Medicine_name(target), amount);
+                    if (s == HIS_OK) {
+                        printf("开药成功！\n");
+                    } else if (s == HIS_ERR_NOT_FOUND) {
+                        printf("未找到该药品\n");
+                    } else if (s == HIS_ERR_OUT_OF_STOCK) {
+                        printf("库存不足！\n");
+                    } else {
+                        printf("开药失败\n");
+                    }
                 }
             }
         }
@@ -158,17 +169,70 @@ Status UI_doc_menu() {
                 }
 
                 long long ward_id = get_input_long_long("病房ID", 1, 99999);
-                int bed_label = (int)get_input_long_long("床号", 1, 100);
-                long long deposit = get_input_long_long("押金（分）", 0, 100000000);
-                Status s = Serv_doc_admission(ward_id, bed_label, deposit);
-                if (s == HIS_OK) printf("入院办理成功！\n");
-                else if (s == HIS_ERR_NOT_FOUND) printf("未找到该病房\n");
-                else if (s == HIS_ERR_BED_OCCUPIED) printf("该床位已被占用\n");
-                else printf("入院办理失败\n");
+                // 展示该病房所有床位状态
+                Ward_T ward = (Ward_T)Serv_helper_finder(ward_id, TYPE_WARD);
+                if (ward == NULL) {
+                    printf("未找到该病房\n");
+                } else {
+                    printf("\n--- %s 床位状态 ---\n", Ward_name(ward));
+                    printf("%-6s | %-8s | %s\n", "床号", "状态", "病人");
+                    printf("-----------------------------\n");
+                    List_T beds = Ward_beds(ward);
+                    void* bp = List_first(beds);
+                    while (bp != NULL) {
+                        Bed_T* bed = (Bed_T*)bp;
+                        const char* status_str = "";
+                        switch(bed->status) {
+                            case BED_EMPTY:     status_str = "空闲"; break;
+                            case BED_OCCUPIED:  status_str = "有人"; break;
+                            case BED_MAINTAIN:  status_str = "维修"; break;
+                        }
+                        const char* pat_name = "";
+                        if (bed->pat_id > 0) {
+                            pat_name = Serv_helper_id_to_name(bed->pat_id, TYPE_PATIENT);
+                        }
+                        printf("%-6d | %-8s | %s\n",
+                            bed->bed_label, status_str,
+                            (bed->status == BED_OCCUPIED && pat_name) ? pat_name : "---");
+                        bp = List_next(beds);
+                    }
+
+                    int bed_label = (int)get_input_long_long("床号", 1, 100);
+                    long long deposit = get_input_long_long("押金（分）", 0, 100000000);
+                    Status s = Serv_doc_admission(ward_id, bed_label, deposit);
+                    if (s == HIS_OK) printf("入院办理成功！\n");
+                    else if (s == HIS_ERR_NOT_FOUND) printf("未找到该病房\n");
+                    else if (s == HIS_ERR_BED_OCCUPIED) printf("该床位已被占用\n");
+                    else printf("入院办理失败\n");
+                }
             }
         }
         else if (choice == 7) {
-            long long id = get_input_long_long("病人ID", 0, 99999);
+            // 先展示当前住院病人列表
+            printf("\n--- 当前住院病人 ---\n");
+            List_T ward_list = Data_get_ward();
+            void* wp = List_first(ward_list);
+            bool has_inpatient = false;
+            while (wp != NULL) {
+                Ward_T w = *(Ward_T*)wp;
+                List_T beds = Ward_beds(w);
+                void* bp = List_first(beds);
+                while (bp != NULL) {
+                    Bed_T* bed = (Bed_T*)bp;
+                    if (bed->status == BED_OCCUPIED && bed->pat_id > 0) {
+                        const char* pat_name = Serv_helper_id_to_name(bed->pat_id, TYPE_PATIENT);
+                        printf("  病人ID: %-8lld | 姓名: %-12s | 病房: %s | 床号: %d\n",
+                            bed->pat_id, pat_name ? pat_name : "未知",
+                            Ward_name(w), bed->bed_label);
+                        has_inpatient = true;
+                    }
+                    bp = List_next(beds);
+                }
+                wp = List_next(ward_list);
+            }
+            if (!has_inpatient) printf("  暂无住院病人\n");
+
+            long long id = get_input_long_long("请输入要办理出院的病人ID", 0, 99999);
             Status s = Serv_doc_discharge(id);
             if (s == HIS_OK) printf("出院办理成功！\n");
             else if (s == HIS_ERR_NOT_FOUND) printf("未找到该病人的住院记录\n");
@@ -209,8 +273,31 @@ Status UI_doc_menu() {
             }
         }
         else if (choice == 10) {
-            // 换床
-            long long pat_id = get_input_long_long("病人ID", 0, 99999);
+            // 换床 - 先展示住院病人列表
+            printf("\n--- 当前住院病人 ---\n");
+            List_T ward_list_all = Data_get_ward();
+            void* wp_all = List_first(ward_list_all);
+            bool has_inpatient = false;
+            while (wp_all != NULL) {
+                Ward_T w = *(Ward_T*)wp_all;
+                List_T beds = Ward_beds(w);
+                void* bp = List_first(beds);
+                while (bp != NULL) {
+                    Bed_T* bed = (Bed_T*)bp;
+                    if (bed->status == BED_OCCUPIED && bed->pat_id > 0) {
+                        const char* pat_name = Serv_helper_id_to_name(bed->pat_id, TYPE_PATIENT);
+                        printf("  病人ID: %-8lld | 姓名: %-12s | 病房: %s | 床号: %d\n",
+                            bed->pat_id, pat_name ? pat_name : "未知",
+                            Ward_name(w), bed->bed_label);
+                        has_inpatient = true;
+                    }
+                    bp = List_next(beds);
+                }
+                wp_all = List_next(ward_list_all);
+            }
+            if (!has_inpatient) printf("  暂无住院病人\n");
+
+            long long pat_id = get_input_long_long("请输入要换床的病人ID", 0, 99999);
             // 展示病房列表
             printf("\n--- 病房列表 ---\n");
             List_T ward_list = Data_get_ward();
@@ -224,18 +311,82 @@ Status UI_doc_menu() {
                     Ward_name(w), Ward_bed_count(w), Ward_empty_count(w));
                 wp = List_next(ward_list);
             }
-            char ward_name[32] = "";
-            get_input_str("目标病房名称", ward_name, 32);
-            int bed_label = (int)get_input_long_long("目标床号", 1, 100);
-            Status s = Serv_doc_change_bed(pat_id, ward_name, bed_label);
-            if (s == HIS_OK) printf("换床成功！\n");
-            else if (s == HIS_ERR_NOT_FOUND) printf("未找到目标病房或病人\n");
-            else if (s == HIS_ERR_BED_OCCUPIED) printf("该床位已被占用\n");
-            else printf("换床失败\n");
+            long long to_ward_id = get_input_long_long("目标病房ID", 1, 99999);
+            // 展示目标病房所有床位状态
+            Ward_T to_ward = (Ward_T)Serv_helper_finder(to_ward_id, TYPE_WARD);
+            if (to_ward == NULL) {
+                printf("未找到该病房\n");
+            } else {
+                printf("\n--- %s 床位状态 ---\n", Ward_name(to_ward));
+                printf("%-6s | %-8s | %s\n", "床号", "状态", "病人");
+                printf("-----------------------------\n");
+                List_T beds = Ward_beds(to_ward);
+                void* bp = List_first(beds);
+                while (bp != NULL) {
+                    Bed_T* bed = (Bed_T*)bp;
+                    const char* status_str = "";
+                    switch(bed->status) {
+                        case BED_EMPTY:     status_str = "空闲"; break;
+                        case BED_OCCUPIED:  status_str = "有人"; break;
+                        case BED_MAINTAIN:  status_str = "维修"; break;
+                    }
+                    const char* pat_name = "";
+                    if (bed->pat_id > 0) {
+                        pat_name = Serv_helper_id_to_name(bed->pat_id, TYPE_PATIENT);
+                    }
+                    printf("%-6d | %-8s | %s\n",
+                        bed->bed_label, status_str,
+                        (bed->status == BED_OCCUPIED && pat_name) ? pat_name : "---");
+                    bp = List_next(beds);
+                }
+
+                int bed_label = (int)get_input_long_long("目标床号", 1, 100);
+                // 通过病房名调用换床（Serv_doc_change_bed 需要病房名）
+                Status s = Serv_doc_change_bed(pat_id, Ward_name(to_ward), bed_label);
+                if (s == HIS_OK) printf("换床成功！\n");
+                else if (s == HIS_ERR_NOT_FOUND) printf("未找到目标病房或病人\n");
+                else if (s == HIS_ERR_BED_OCCUPIED) printf("该床位已被占用\n");
+                else printf("换床失败\n");
+            }
+        }
+        else if (choice == 12) {
+            // 结束看诊（释放当前病人）
+            if (cur_pat == INVALID_ID) {
+                printf("当前无看诊病人\n");
+            } else {
+                Status s = Serv_doc_end_reg();
+                if (s == HIS_OK) {
+                    printf("已结束当前看诊，病人已释放\n");
+                } else {
+                    printf("结束看诊失败\n");
+                }
+            }
+        }
+        else if (choice == 13) {
+            Serv_doc_unactive();
+            printf("已结束出诊\n");
         }
         else if (choice == 11) {
-            // 换医生
-            long long pat_id = get_input_long_long("病人ID", 0, 99999);
+            // 换医生 - 先搜索病人
+            char pat_keyword[32] = "";
+            get_input_str("搜索病人姓名（直接回车显示全部）", pat_keyword, 32);
+            List_T pat_list = Data_get_patient();
+            printf("\n--- 病人列表 ---\n");
+            printf("%-8s | %-12s | %-4s | %-4s | %-15s\n", "ID", "姓名", "性别", "年龄", "电话");
+            printf("------------------------------------------------------------\n");
+            void* pp = List_first(pat_list);
+            while (pp != NULL) {
+                Patient_T p = *(Patient_T*)pp;
+                if (strlen(pat_keyword) == 0 || strstr(Patient_name(p), pat_keyword) != NULL) {
+                    printf("%-8lld | %-12s | %-4s | %-4d | %-15s\n",
+                        Patient_id(p), Patient_name(p),
+                        Patient_gender(p) == MALE ? "男" : "女",
+                        Patient_age(p), Patient_phone(p));
+                }
+                pp = List_next(pat_list);
+            }
+
+            long long pat_id = get_input_long_long("请输入病人ID", 0, 99999);
             // 展示医生列表
             printf("\n--- 医生列表 ---\n");
             List_T doc_list = Data_get_doctor();
@@ -261,10 +412,6 @@ Status UI_doc_menu() {
             if (s == HIS_OK) printf("换医生成功！\n");
             else if (s == HIS_ERR_NOT_FOUND) printf("未找到该病人或医生\n");
             else printf("换医生失败\n");
-        }
-        else if (choice == 0) {
-            Serv_doc_unactive();
-            printf("已结束出诊\n");
         }
         press_enter();
     }

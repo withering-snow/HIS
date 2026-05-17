@@ -72,7 +72,7 @@ const char* Ward_name(T w);
 typedef struct {
     Department  dept;
     long long   daily_cost;
-    const char* ward_name;
+    char        ward_name[32];
 } Ward_Update_Pack;
 // 重装载： 在校验数据合法性后，将所有数据进行覆盖
 Status Ward_update(T w, const Ward_Update_Pack* pack);

@@ -123,6 +123,9 @@ static Status __patient() {
         else if (choice == 3) {
             CLEAN();
             printf("--- 修改病人信息 ---\n");
+            // 先展示病人列表
+            printf("当前病人列表：\n");
+            __print_patient_list(Data_get_patient());
             long long pat_id = get_input_long_long("请输入要修改的病人ID", 0, 999999);
             List_T list = Data_get_patient();
             void* ptr = List_first(list);
@@ -232,7 +235,9 @@ static Status __doctor() {
             }
         }
         else if (choice == 2) {
-            long long id = get_input_long_long("输入要删除的 ID", 0, 99999);
+            printf("当前医生列表：\n");
+            __print_doctor_list(Data_get_doctor());
+            long long id = get_input_long_long("输入要删除的医生ID", 0, 99999);
             Status s = Serv_root_remove_doctor(id);
             if (s == HIS_OK) {
                 printf("删除成功！\n");
@@ -391,6 +396,7 @@ static Status __medicine() {
             }
         }
         else if (choice == 2) {
+            printf("（参考上方药品列表中的ID）\n");
             long long mid = get_input_long_long("药品 ID", 0, 9999);
             long long bprice = get_input_long_long("进价（分）", 0, 100000);
             int count = (int)get_input_long_long("数量", 1, 1000);
@@ -405,6 +411,7 @@ static Status __medicine() {
             }
         }
         else if (choice == 3) {
+            printf("（参考上方药品列表中的ID）\n");
             long long mid = get_input_long_long("删除药品 ID", 0, 9999);
             Status s = Serv_root_remove_medicine(mid);
             if (s == HIS_OK) {
@@ -591,8 +598,8 @@ static void __print_ward_list(List_T list) {
 
 static void __print_bed_detail(Ward_T w) {
     printf("\n病房：%s（%s）\n", Ward_name(w), department_name(Ward_dept(w)));
-    printf("%-6s | %-10s | %-10s | %s\n", "床号", "状态", "病人ID", "入住时间");
-    printf("--------------------------------------------------\n");
+    printf("%-6s | %-10s | %-10s | %-12s | %s\n", "床号", "状态", "病人ID", "病人姓名", "入住时间");
+    printf("-------------------------------------------------------------\n");
     List_T beds = Ward_beds(w);
     void* bp = List_first(beds);
     while (bp != NULL) {
@@ -607,8 +614,13 @@ static void __print_bed_detail(Ward_T w) {
         if (bed->start_ts > 0) {
             strncpy(time_str, Time_to_string_date(bed->start_ts), 32);
         }
-        printf("%-6d | %-10s | %-10lld | %s\n",
-            bed->bed_label, status_str, bed->pat_id, time_str);
+        const char* pat_name = "";
+        if (bed->pat_id > 0) {
+            pat_name = Serv_helper_id_to_name(bed->pat_id, TYPE_PATIENT);
+        }
+        printf("%-6d | %-10s | %-10lld | %-12s | %s\n",
+            bed->bed_label, status_str, bed->pat_id,
+            pat_name ? pat_name : "---", time_str);
         bp = List_next(beds);
     }
 }
@@ -644,6 +656,7 @@ static Status __ward() {
         else if (choice == 2) {
             CLEAN();
             printf("--- 删除病房 ---\n");
+            printf("（参考上方病房列表中的ID）\n");
             long long ward_id = get_input_long_long("请输入要删除的病房ID", 0, 99999);
             Status s = Serv_root_remove_ward(ward_id);
             if (s == HIS_OK) {
@@ -748,15 +761,17 @@ static Status __ward() {
 static Status __fund() {
     CLEAN();
     printf("--- 资金账户总览 ---\n");
-    printf("%-8s | %-12s\n", "病人ID", "余额");
-    printf("------------------------\n");
+    printf("%-8s | %-12s | %-20s\n", "病人ID", "余额", "姓名");
+    printf("----------------------------------------------\n");
     List_T list = Data_get_fund();
     void* ptr = List_first(list);
     while (ptr != NULL) {
         Fund_T f = *(Fund_T*)ptr;
-        printf("%-8lld | %-12lld.%02lld 元\n",
-
-            Fund_pat_id(f), Fund_balance(f)/100, Fund_balance(f)%100);
+        long long pat_id = Fund_pat_id(f);
+        long long balance = Fund_balance(f);
+        const char* pat_name = Serv_helper_id_to_name(pat_id, TYPE_PATIENT);
+        printf("%-8lld | %11lld.%02lld 元 | %-20s\n",
+            pat_id, balance/100, balance%100, pat_name ? pat_name : "未知");
         ptr = List_next(list);
     }
     if(List_size(list) == 0) printf("暂无资金账户\n");
@@ -764,38 +779,41 @@ static Status __fund() {
     return HIS_OK;
 }
 
+// 记录按时间戳排序的比较器
+static int __record_cmp_time(const void* a, const void* b) {
+    Record_T ra = *(Record_T*)a;
+    Record_T rb = *(Record_T*)b;
+    long long ta = Rec_time_stamp(ra);
+    long long tb = Rec_time_stamp(rb);
+    if (ta < tb) return -1;
+    if (ta > tb) return 1;
+    return 0;
+}
+
 static void __print_records(List_T list) {
-    printf("%-8s | %-12s | %-10s | %-12s | %-10s\n", "ID", "病人", "类型", "时间", "费用");
-    printf("---------------------------------------------------------------\n");
+    // 按时间戳排序
+    List_sort(list, __record_cmp_time);
+
+    printf("%-8s | %-12s | %-10s | %-12s | %-10s | %s\n", "ID", "病人", "类型", "时间", "费用", "详情");
+    printf("----------------------------------------------------------------------------------------------------\n");
     long long total_income = 0;
     void* ptr = List_first(list);
     while (ptr != NULL) {
         Record_T r = *(Record_T*)ptr;
         long long cost = Rec_cost(r);
         total_income += cost;
-        const char* rec_type_str = "";
-        switch(Rec_type(r)) {
-            case REC_REGISTRATION:  rec_type_str = "挂号"; break;
-            case REC_CONSULTATION:  rec_type_str = "看诊"; break;
-            case REC_EXAMINATION:   rec_type_str = "检查"; break;
-            case REC_PRESCRIPTION:  rec_type_str = "开药"; break;
-            case REC_ADMISSION:     rec_type_str = "入院"; break;
-            case REC_DISCHARGE:     rec_type_str = "出院"; break;
-            case REC_CHANGE_BED:    rec_type_str = "换床"; break;
-            case REC_CHANGE_DOC:    rec_type_str = "换医生"; break;
-            case REC_STOCK_IN:      rec_type_str = "入库"; break;
-            case REC_STOCK_OUT:     rec_type_str = "出库"; break;
-            default:                rec_type_str = "未知"; break;
-        }
-        printf("%-8lld | %-12s | %-10s | %-12s | %lld.%02lld 元\n",
-            Rec_actor_id(r), Serv_helper_id_to_name(Rec_actor_id(r), TYPE_PATIENT),
-            rec_type_str, Time_to_string_date(Rec_time_stamp(r)), cost/100, cost%100);
+        ServRecordDataPackage* pkg = Serv_helper_record_to_pkg(r);
+        printf("%-8lld | %-12s | %-10s | %-12s | %lld.%02lld 元 | %s\n",
+            Rec_actor_id(r), pkg->actor_name,
+            pkg->type_name, Time_to_string_date(Rec_time_stamp(r)), cost/100, cost%100, pkg->content);
+        free(pkg);
         ptr = List_next(list);
     }
     if(List_size(list) == 0) {
         printf("暂无记录\n");
-    } else {
-        printf("---------------------------------------------------------------\n");
+    } 
+    else {
+        printf("----------------------------------------------------------------------------------------------------\n");
         printf("总收入：%lld.%02lld 元\n", total_income/100, total_income%100);
     }
 }
@@ -816,21 +834,25 @@ static Status __record() {
         }
         else if (choice == 2) {
             CLEAN();
-            printf("--- 按时间筛选 ---\n");
-            printf("起始时间：\n");
-            int y1 = (int)get_input_long_long("  年 (1900~2026)", 1900, 2026);
-            int m1 = (int)get_input_long_long("  月 (1~12)", 1, 12);
-            int d1 = (int)get_input_long_long("  日 (1~31)", 1, 31);
+            printf("--- 按时间筛选（闭区间） ---\n");
+            printf("请输入起始日期（YYYYMMDD，如 20260517）：");
+            long long start_int = get_input_long_long("", 19000101, 20991231);
+            int y1 = (int)(start_int / 10000);
+            int m1 = (int)((start_int % 10000) / 100);
+            int d1 = (int)(start_int % 100);
             struct tm tm1 = {0};
             tm1.tm_year = y1 - 1900; tm1.tm_mon = m1 - 1; tm1.tm_mday = d1;
             long long start_ts = (long long)mktime(&tm1);
 
-            printf("结束时间：\n");
-            int y2 = (int)get_input_long_long("  年 (1900~2026)", 1900, 2026);
-            int m2 = (int)get_input_long_long("  月 (1~12)", 1, 12);
-            int d2 = (int)get_input_long_long("  日 (1~31)", 1, 31);
+            printf("请输入结束日期（YYYYMMDD，如 20260520）：");
+            long long end_int = get_input_long_long("", 19000101, 20991231);
+            int y2 = (int)(end_int / 10000);
+            int m2 = (int)((end_int % 10000) / 100);
+            int d2 = (int)(end_int % 100);
             struct tm tm2 = {0};
             tm2.tm_year = y2 - 1900; tm2.tm_mon = m2 - 1; tm2.tm_mday = d2;
+            // 结束日期设为当天 23:59:59，实现闭区间
+            tm2.tm_hour = 23; tm2.tm_min = 59; tm2.tm_sec = 59;
             long long end_ts = (long long)mktime(&tm2);
 
             List_T list = Data_get_record();

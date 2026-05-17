@@ -85,7 +85,8 @@ Status Serv_doc_consult(const char *diagnosis, const char *advice){
         ptr = List_next(records);
     }
 
-    Serv_doc_end_reg();
+    // 注意：不在这里结束看诊，医生可继续开药/检查等操作
+    // 医生需要手动选择"结束看诊"来释放当前病人
     Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生对病人[%lld]完成看诊", _cur_doc_pat.pat_id);
     return HIS_OK;
 }

@@ -6,6 +6,12 @@ project(HIS
 
 set(CMAKE_C_STANDARD 11)
 
+# Debug/Release 配置
+# Debug 模式：定义 NDEBUG，ASSERT 生效
+# Release 模式：不定义 NDEBUG，ASSERT 跳过
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DNDEBUG")
+set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
+
 include_directories(
     include/core
     include/entity
