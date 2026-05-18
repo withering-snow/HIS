@@ -18,7 +18,7 @@ static const char* registration_type_names[] =
 {"预约", "候诊", "看诊中", "诊毕"};
 
 
-const void * Serv_helper_finder(long long entity_id, ServEntityType type){
+void * Serv_helper_finder(long long entity_id, ServEntityType type){
     List_T list = NULL;
     switch(type){
         case TYPE_ACCOUNT:  list = Data_get_account();  break;
@@ -125,9 +125,14 @@ T* Serv_helper_record_to_pkg(Record_T r){
     strncpy(pkg->type_name, record_type_names[Rec_type(r)], 16);
     pkg->is_invalid = Rec_is_invalid(r);
     pkg->actor_id = Rec_actor_id(r);
-    strncpy(pkg->actor_name,
-        Serv_helper_id_to_name(Rec_actor_id(r),
-            (Rec_type(r)<REC_STOCK_IN) ? TYPE_PATIENT : TYPE_DOCTOR), 32);
+    if (Rec_type(r) == REC_STOCK_IN || Rec_type(r) == REC_STOCK_OUT) {
+        strncpy(pkg->actor_name, "root", 32);
+    } else {
+        strncpy(pkg->actor_name,
+            Serv_helper_id_to_name(Rec_actor_id(r),
+                (Rec_type(r)<REC_STOCK_IN) ? TYPE_PATIENT : TYPE_DOCTOR), 32);
+    }
+
     pkg->time_stamp = Rec_time_stamp(r);
     pkg->cost = Rec_cost(r);
 
@@ -176,11 +181,25 @@ T* Serv_helper_record_to_pkg(Record_T r){
 
         case REC_DISCHARGE:{
             DataDischarge* data = (DataDischarge*)Rec_detail(r);
-            long long refund = -Rec_cost(r);  // cost传的是-refund
-            snprintf(buffer, 512, "总住院开销[%lld.%02lld]元 实付[%lld.%02lld]元 退还押金[%lld.%02lld]元",
-                data->total_bill/100, data->total_bill%100,
-                data->paid/100, data->paid%100,
-                refund/100, refund%100);
+            long long cost = Rec_cost(r);
+            long long refund = (cost < 0) ? -cost : 0;   // 负数表示退款
+            long long extra = (cost > 0) ? cost : 0;     // 正数表示补扣
+            if (extra > 0) {
+                snprintf(buffer, 512, "总住院开销[%lld.%02lld]元 押金[%lld.%02lld]元 补扣[%lld.%02lld]元",
+                    data->total_bill/100, data->total_bill%100,
+                    data->paid/100, data->paid%100,
+                    extra/100, extra%100);
+            } else if (refund > 0) {
+                snprintf(buffer, 512, "总住院开销[%lld.%02lld]元 押金[%lld.%02lld]元 退还押金[%lld.%02lld]元",
+                    data->total_bill/100, data->total_bill%100,
+                    data->paid/100, data->paid%100,
+                    refund/100, refund%100);
+            } else {
+                snprintf(buffer, 512, "总住院开销[%lld.%02lld]元 押金[%lld.%02lld]元 刚好够用",
+                    data->total_bill/100, data->total_bill%100,
+                    data->paid/100, data->paid%100);
+            }
+
 
             break;
         }

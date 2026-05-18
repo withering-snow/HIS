@@ -3,7 +3,7 @@
 
 
 
-static long long _id_counter = 1;
+static long long _id_counter = 0;
 
 
 

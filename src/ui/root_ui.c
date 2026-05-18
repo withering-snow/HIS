@@ -576,12 +576,32 @@ static Status __medicine() {
             }
 
             long long batch_id = get_input_long_long("请输入要报废的批次ID", 0, 999999);
+            // 先找到该批次信息，用于创建报废记录
+            MedicineBatch* discard_bat = NULL;
+            List_T batches2 = Medicine_batches(target);
+            void* bp2 = List_first(batches2);
+            while (bp2 != NULL) {
+                MedicineBatch* bat = (MedicineBatch*)bp2;
+                if (bat->id == batch_id) {
+                    discard_bat = bat;
+                    break;
+                }
+                bp2 = List_next(batches2);
+            }
             Status s = Medicine_discard_batch(target, batch_id);
             if (s == HIS_OK) {
                 printf("报废成功！\n");
+                // 创建报废记录
+                if (discard_bat != NULL) {
+                    long long admin_id = Serv_account_cur_id();
+                    Record_T r = Rec_s_out_new(0, admin_id, Medicine_id(target), batch_id, discard_bat->remain, discard_bat->batch_no);
+                    List_push_back(Data_get_record(), &r);
+                }
+
             } else {
                 printf("报废失败（批次不存在或已报废）\n");
             }
+
             press_enter();
         }
     }

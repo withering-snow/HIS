@@ -90,7 +90,7 @@ typedef enum{
 // =============================================================================
 // 辅助的函数
 
-const void* Serv_helper_finder(long long entity_id, ServEntityType type);
+void* Serv_helper_finder(long long entity_id, ServEntityType type);
 
 /**
  * @brief       将id转换成指定实体的名字字符串，便于显示

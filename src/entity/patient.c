@@ -4,7 +4,7 @@
 
 
 // 病人实体使用的id分配计数器，必须定义
-static long long _id_counter = 1;
+static long long _id_counter = 0;
 
 
 
