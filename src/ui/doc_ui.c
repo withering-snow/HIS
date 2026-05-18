@@ -116,7 +116,7 @@ Status UI_doc_menu() {
             } else {
                 // 先模糊搜索药品，再选ID
                 char keyword[32] = "";
-                get_input_str("搜索药品名称（直接回车显示全部）", keyword, 32);
+                get_input_str_allow_empty("搜索药品名称（直接回车显示全部）", keyword, 32);
                 List_T med_list = Data_get_medicine();
                 printf("\n--- 药品列表 ---\n");
                 printf("%-8s | %-20s | %-10s | %-8s\n", "ID", "药品名称", "零售价", "库存");

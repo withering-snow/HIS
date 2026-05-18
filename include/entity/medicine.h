@@ -60,10 +60,15 @@ Status Medicine_batch_load(
     long long id, long long buy_price, long long expire_ts,
     int remain, BatchStatus status, const char* batch_no)
 ;
-Status Medicine_batch_add(
+/**
+ * @brief 增加药品批次
+ * @return 成功返回新批次ID，失败返回负值
+ */
+long long Medicine_batch_add(
     T m,
     long long buy_price, long long expire_ts, int remain, const char* batch_no)
 ;
+
 
 /**
  * @brief 扣减库存（核心业务：开药）

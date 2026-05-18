@@ -201,7 +201,7 @@ Status Serv_doc_prescribe(const char *med_name, int amount){
 
 }
 
-Status Serv_doc_admission(long long ward_id, int bed_label, long long deposit){
+Status Serv_doc_admission(long long ward_id, int bed_label, long long amount){
     if(!_cur_is_active || _cur_doc_pat.pat_id == INVALID_ID){
         return HIS_ERR_NO_USER;
     }
@@ -211,31 +211,49 @@ Status Serv_doc_admission(long long ward_id, int bed_label, long long deposit){
         return HIS_ERR_NOT_FOUND;
     }
 
+    if(Fund_can_afford(Serv_helper_finder(_cur_doc_pat.pat_id, TYPE_FUND), amount) != HIS_OK){
+        return HIS_ERR_INSUFFICIENT_FUNDS;
+    }
+
     // 占用床位
     Status s = Ward_occupy_bed(ward, bed_label, _cur_doc_pat.pat_id);
     if(s != HIS_OK){
         return s;
     }
 
-    // 充押金到资金账户
-    Fund_T fund = (Fund_T)Serv_helper_finder(_cur_doc_pat.pat_id, TYPE_FUND);
-    if(fund == NULL){
-        // 创建资金账户
-        fund = Fund_new(_cur_doc_pat.pat_id);
-        List_push_back(Data_get_fund(), &fund);
-    }
-    Fund_deposit(fund, deposit);
+    Fund_withdraw(Serv_helper_finder(_cur_doc_pat.pat_id, TYPE_FUND), amount);
 
     // 绑定病房关系
     Rel_bind_ward(_cur_doc_pat.pat_id, ward_id);
 
     // 创建入院记录
-    Record_T r = Rec_admit_new(deposit, _cur_doc_pat.pat_id, ward_id, bed_label, deposit);
+    Record_T r = Rec_admit_new(amount, _cur_doc_pat.pat_id, ward_id, bed_label, amount);
 
     List_push_back(Data_get_record(), &r);
 
-    Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生为病人[%lld]办理入院 病房[%lld]床号[%d]押金[%lld]", _cur_doc_pat.pat_id, ward_id, bed_label, deposit);
+    Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生为病人[%lld]办理入院 病房[%lld]床号[%d]押金[%lld]", _cur_doc_pat.pat_id, ward_id, bed_label, amount);
     return HIS_OK;
+}
+
+// 查找该患者最新的入院记录，返回押金金额
+static long long __get_latest_deposit(long long pat_id) {
+    List_T records = Data_get_record();
+    void* ptr = List_first(records);
+    long long deposit = 0;
+    long long latest_ts = 0;
+    while (ptr != NULL) {
+        Record_T r = *(Record_T*)ptr;
+        if (!Rec_is_invalid(r) && Rec_type(r) == REC_ADMISSION && Rec_actor_id(r) == pat_id) {
+            long long ts = Rec_time_stamp(r);
+            if (ts > latest_ts) {
+                latest_ts = ts;
+                DataAdmission* data = (DataAdmission*)Rec_detail(r);
+                deposit = data->deposit;
+            }
+        }
+        ptr = List_next(records);
+    }
+    return deposit;
 }
 
 Status Serv_doc_discharge(long long pat_id){
@@ -266,34 +284,59 @@ Status Serv_doc_discharge(long long pat_id){
     long long daily_cost = (ward != NULL) ? Ward_daily_cost(ward) : 0;
     long long total_bill = daily_cost * duration;
 
-    // 扣费并退还剩余押金
+    // 读取入院押金（入院时已从患者账户扣除）
+    long long deposit = __get_latest_deposit(pat_id);
+
     Fund_T fund = (Fund_T)Serv_helper_finder(pat_id, TYPE_FUND);
-    long long paid = 0;
-    long long refund = 0;
-    if(fund != NULL){
-        long long balance = Fund_balance(fund);
-        if(balance >= total_bill){
-            paid = total_bill;
-            refund = balance - total_bill;
-        } else {
-            paid = balance;
-            refund = 0;
+    long long paid = 0;     // 实际从患者身上扣的钱（押金部分）
+    long long extra = 0;    // 押金不够时需补扣的金额
+    long long refund = 0;   // 押金有剩时退还的金额
+
+    if (deposit >= total_bill) {
+        // 押金够付 退还差额
+        paid = total_bill;
+        refund = deposit - total_bill;
+        if (fund != NULL && refund > 0) {
+            Fund_deposit(fund, refund);  // 退还到患者账户
         }
-        Fund_withdraw(fund, balance);  // 全部取出（住院费+退还剩余押金）
+    } 
+    else {
+        // 押金不够 从患者账户补扣
+        paid = deposit;
+        extra = total_bill - deposit;
+        if (fund != NULL) {
+            if (Fund_can_afford(fund, extra) != HIS_OK) {
+                // 钱不够，恢复床位占用
+                if (ward != NULL) {
+                    Ward_occupy_bed(ward, bed->bed_label, pat_id);
+                }
+                return HIS_ERR_INSUFFICIENT_FUNDS;
+            }
+            Fund_withdraw(fund, extra);
+        } else {
+            // 没有资金账户，恢复床位
+            if (ward != NULL) {
+                Ward_occupy_bed(ward, bed->bed_label, pat_id);
+            }
+            return HIS_ERR_NO_FUNDS;
+        }
     }
 
     // 解除绑定
     Rel_unbind_ward(pat_id);
 
     // 创建出院记录
-    Record_T r = Rec_disc_new(paid, pat_id, total_bill, paid);
+    // cost: 正数表示补扣，负数表示退款，0表示刚好够
+    long long cost = (refund > 0) ? -refund : extra;
+    Record_T r = Rec_disc_new(cost, pat_id, total_bill, deposit);
 
     List_push_back(Data_get_record(), &r);
 
-    Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生办理病人[%lld]出院 账单[%lld]实付[%lld] 退还押金[%lld]", pat_id, total_bill, paid, refund);
+    Log_printf(CLASS_DOCTOR, _cur_doc_pat.doc_id, "医生办理病人[%lld]出院 账单[%lld]押金[%lld]退还[%lld]补扣[%lld]",
+        pat_id, total_bill, deposit, refund, extra);
     return HIS_OK;
-
 }
+
 
 Status Serv_doc_change_bed(long long pat_id, const char *to_ward_name, int to_bed_label){
     if(!_cur_is_active){

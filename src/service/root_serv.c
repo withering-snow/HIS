@@ -72,16 +72,24 @@ Status Serv_root_add_medicine_batch(long long med_id, long long buy_price, long 
     while (ptr != NULL) {
         Medicine_T m = *(Medicine_T*)ptr;
         if (Medicine_id(m) == med_id) {
-            Status s = Medicine_batch_add(m, buy_price, expire_ts, remain, batch_no);
-            if (s == HIS_OK) {
-                Log_printf(CLASS_ROOT, Serv_account_cur_id(), "管理员药品[%lld][%s]进货 批次[%s] 数量[%d] 进价[%lld]", med_id, Medicine_name(m), batch_no, remain, buy_price);
+            long long batch_id = Medicine_batch_add(m, buy_price, expire_ts, remain, batch_no);
+            if (batch_id > 0) {
+                // 创建进货记录
+                long long admin_id = Serv_account_cur_id();
+                Record_T r = Rec_s_in_new(-(buy_price * remain), admin_id, med_id, batch_id, buy_price, expire_ts, remain, batch_no);
+
+                List_push_back(Data_get_record(), &r);
+                Log_printf(CLASS_ROOT, admin_id, "管理员药品[%lld][%s]进货 批次[%s] 数量[%d] 进价[%lld]", med_id, Medicine_name(m), batch_no, remain, buy_price);
+                return HIS_OK;
             }
-            return s;
+            return HIS_ERR_NOT_FOUND;
+
         }
         ptr = List_next(list);
     }
     return HIS_ERR_NOT_FOUND;
 }
+
 
 // 删除药品
 Status Serv_root_remove_medicine(long long med_id) {

@@ -1,13 +1,12 @@
 #include <medicine.h>
-static long long _id_counter=1;
-static long long _next_bat_id = 1;
+static long long _id_counter = 0;
+static long long _bat_id_counter = 0;
 
-#define BAT_ID_NEW()     ((_next_bat_id < LLONG_MAX)? (_next_bat_id++): INVALID_ID)
+#define BAT_ID_NEW()     ((_bat_id_counter < LLONG_MAX)? (++_bat_id_counter): INVALID_ID)
 
-// 加载批次：设置起始 ID (对应 ID_LOAD)
 #define BAT_ID_LOAD(id) \
 do{ \
-if(id > _next_bat_id) _next_bat_id = id; \
+if(id > _bat_id_counter) _bat_id_counter = id; \
 }while(0)
 
 struct Medicine_T {
@@ -174,7 +173,7 @@ Status Medicine_batch_load(
     return HIS_OK;
 }
 
-Status Medicine_batch_add(
+long long Medicine_batch_add(
     Medicine_T m,
     long long buy_price, long long expire_ts,
     int remain, const char* batch_no)
@@ -190,10 +189,12 @@ Status Medicine_batch_add(
     bat.status    = AVAILABLE;
     strncpy(bat.batch_no, batch_no, 31);
     bat.batch_no[31] = '\0';
+    long long new_id = bat.id;
     List_push_back(m->batches, &bat);
     Medicine_update_remain(m);
-    return HIS_OK;
+    return new_id;
 }
+
 
 Status Medicine_deduct(Medicine_T m, int amount)
 {

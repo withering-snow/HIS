@@ -2,15 +2,9 @@ cmake_minimum_required(VERSION 4.0)
 
 project(HIS
         LANGUAGES C
-        VERSION 1.0.1)
+        VERSION 1.0.3)
 
 set(CMAKE_C_STANDARD 11)
-
-# Debug/Release 配置
-# Debug 模式：定义 NDEBUG，ASSERT 生效
-# Release 模式：不定义 NDEBUG，ASSERT 跳过
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -DNDEBUG")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O2")
 
 include_directories(
     include/core
@@ -25,3 +19,9 @@ include_directories(
 file(GLOB_RECURSE SOURCES "src/*.c")
 
 add_executable(HIS ${SOURCES})
+
+
+target_compile_options(HIS PRIVATE $<$<CONFIG:Release>:-O2>)
+target_compile_definitions(HIS PRIVATE $<$<CONFIG:Release>:NDEBUG>)
+
+target_compile_options(HIS PRIVATE $<$<CONFIG:Debug>:-g>)
