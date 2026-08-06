@@ -1,5 +1,6 @@
 cmake-build-debug/
 build/
+data/
 
 # CMake 构建产物（根目录就地构建）
 CMakeFiles/
